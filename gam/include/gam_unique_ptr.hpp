@@ -1,17 +1,19 @@
 /* ***************************************************************************
  *
- *  This program is free software; you can redistribute it and/or modify it
- *  under the terms of the GNU Lesser General Public License version 3 as
- *  published by the Free Software Foundation.
+ *  This file is part of gam.
  *
- *  This program is distributed in the hope that it will be useful, but WITHOUT
- *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- *  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- *  License for more details.
+ *  gam is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  gam is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU Lesser General Public License for more details.
  *
  *  You should have received a copy of the GNU Lesser General Public License
- *  along with this program; if not, write to the Free Software Foundation,
- *  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *  along with gam. If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************************
  */
@@ -22,8 +24,6 @@
  * @date Apr 14, 2017
  * @brief implements gam_unique_ptr class and some associated functions
  *
- * Here typically goes a more extensive explanation of what the file
- * contains.
  */
 
 #ifndef GAM_INCLUDE_GAM_UNIQUE_PTR_HPP_
