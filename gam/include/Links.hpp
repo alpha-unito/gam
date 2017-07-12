@@ -66,7 +66,7 @@ static void fi_getinfo_(fi_info **fi, char *node, char *service, uint64_t flags)
 
     fi_freeinfo(hints);
 
-#if 0
+#ifdef GAM_LOG
     fi_info *fip = *fi;
     for (int fii = 0; fip; fip = fip->next, fii++)
     fprintf(stderr, "***\nprovider #%d:\n%s", fii,
@@ -79,6 +79,7 @@ static void init_links()
     int ret = 0;
 
     //query fabric contexts
+    fprintf(stderr, "LKS init_links\n");
     char *node = NULL, *service = NULL;
     uint64_t flags = 0;
     fi_info *fi = fi_allocinfo();
@@ -236,6 +237,7 @@ private:
         int ret = 0;
 
         //get fabric context
+        fprintf(stderr, "LKS src-endpoint node=%s svc=%s\n", node, service);
         uint64_t flags = FI_SOURCE;
         fi_info *fi = fi_allocinfo();
         fi_getinfo_(&fi, node, service, flags);
