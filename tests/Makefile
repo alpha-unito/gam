@@ -43,11 +43,11 @@ VERBOSE              = #-v
 #  - DGAM_DBG               enable internal debugging
 #
 #########################################################################
-CXX 		         = g++ -std=c++11
+CXX 		             ?= g++
 LINK_OPT             = 
 VERSION              = 
 OPTIMIZE_FLAGS       = -O3 -g0
-CXXFLAGS             = -Wall -DGAM_LOG -DGAM_DBG -DDFF2_LOG
+CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG -DDFF2_LOG
 LDFLAGS              = 
 INCS                 = -I$(GAM_INCS) `pkg-config --cflags libfabric`
 LIBS                 = -lpthread `pkg-config --libs libfabric`

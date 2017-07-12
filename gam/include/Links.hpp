@@ -44,7 +44,8 @@
 #include "GlobalPointer.hpp"
 #include "Logger.hpp"
 
-namespace gam {
+namespace gam
+{
 
 static struct fid_fabric *fabric;
 static struct fid_domain *domain;
@@ -56,9 +57,11 @@ static void fi_getinfo_(fi_info **fi, char *node, char *service, uint64_t flags)
     fi_info *hints = fi_allocinfo();
     int ret = 0;
 
+    //todo check hints
+
     //prepare for querying fabric contexts
     hints->ep_attr->type = FI_EP_RDM;
-    //todo more hints
+    hints->mode = ~0;
 
     //query fabric contexts
     ret = fi_getinfo(FI_VERSION(1, 3), node, service, flags, hints, fi);
@@ -67,10 +70,20 @@ static void fi_getinfo_(fi_info **fi, char *node, char *service, uint64_t flags)
     fi_freeinfo(hints);
 
 #ifdef GAM_LOG
-    fi_info *fip = *fi;
-    for (int fii = 0; fip; fip = fip->next, fii++)
-    fprintf(stderr, "***\nprovider #%d:\n%s", fii,
-            fi_tostr(fip, FI_TYPE_INFO));
+    struct fi_info *cur;
+    for (cur = *fi; cur; cur = cur->next)
+    {
+        fprintf(stderr, "provider: %s\n", cur->fabric_attr->prov_name);
+        fprintf(stderr, "    fabric: %s\n", cur->fabric_attr->name);
+        fprintf(stderr, "    domain: %s\n", cur->domain_attr->name);
+        fprintf(stderr, "    version: %d.%d\n",
+                FI_MAJOR(cur->fabric_attr->prov_version),
+                FI_MINOR(cur->fabric_attr->prov_version));
+        fprintf(stderr, "    type: %s\n",
+                fi_tostr(&cur->ep_attr->type, FI_TYPE_EP_TYPE));
+        fprintf(stderr, "    protocol: %s\n",
+                fi_tostr(&cur->ep_attr->protocol, FI_TYPE_PROTOCOL));
+    }
 #endif
 }
 
@@ -82,7 +95,7 @@ static void init_links()
     fprintf(stderr, "LKS init_links\n");
     char *node = NULL, *service = NULL;
     uint64_t flags = 0;
-    fi_info *fi = fi_allocinfo();
+    fi_info *fi;
     fi_getinfo_(&fi, node, service, flags);
 
     //init fabric context
@@ -103,8 +116,8 @@ template<typename T>
 class Links
 {
 public:
-    Links(executor_id cardinality, executor_id self) :
-            rank_to_addr(cardinality), self(self)
+    Links(executor_id cardinality, executor_id self)
+            : rank_to_addr(cardinality), self(self)
     {
 
     }
@@ -239,7 +252,7 @@ private:
         //get fabric context
         fprintf(stderr, "LKS src-endpoint node=%s svc=%s\n", node, service);
         uint64_t flags = FI_SOURCE;
-        fi_info *fi = fi_allocinfo();
+        fi_info *fi;
         fi_getinfo_(&fi, node, service, flags);
 
         //init TX CQ (completion queue)
