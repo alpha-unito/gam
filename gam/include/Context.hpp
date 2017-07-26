@@ -126,7 +126,7 @@ public:
         /*
          * initialize links
          */
-        init_links();
+        init_links(node.host);
 
         /*
          * create links
@@ -179,6 +179,8 @@ public:
         delete pap_links;
         delete local_links;
         delete remote_links;
+
+        fini_links();
 
         /*
          * finalize logger

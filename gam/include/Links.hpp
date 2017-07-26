@@ -60,12 +60,30 @@ static void fi_getinfo_(fi_info **fi, char *node, char *service, uint64_t flags)
     //todo check hints
 
     //prepare for querying fabric contexts
+    hints->caps = FI_MSG | FI_DIRECTED_RECV;
     hints->ep_attr->type = FI_EP_RDM;
-    hints->mode = ~0;
+    hints->mode = FI_CONTEXT;
 
     //query fabric contexts
     ret = fi_getinfo(FI_VERSION(1, 3), node, service, flags, hints, fi);
     assert(!ret);
+
+    for (fi_info *cur = *fi; cur; cur = cur->next)
+    {
+        uint32_t prot = cur->ep_attr->protocol;
+        if (prot == FI_PROTO_RXM)
+        {
+            fi_info *tmp = fi_dupinfo(cur);
+            fi_freeinfo(*fi);
+            *fi = tmp;
+
+#ifdef GAM_LOG
+            fprintf(stderr, "> promoted FI_PROTO_RXM provider\n");
+#endif
+
+            break;
+        }
+    }
 
     fi_freeinfo(hints);
 
@@ -87,16 +105,17 @@ static void fi_getinfo_(fi_info **fi, char *node, char *service, uint64_t flags)
 #endif
 }
 
-static void init_links()
+static void init_links(char *src_node)
 {
     int ret = 0;
 
     //query fabric contexts
+#ifdef GAM_LOG
     fprintf(stderr, "LKS init_links\n");
-    char *node = NULL, *service = NULL;
+#endif
     uint64_t flags = 0;
     fi_info *fi;
-    fi_getinfo_(&fi, node, service, flags);
+    fi_getinfo_(&fi, src_node, NULL, flags);
 
     //init fabric context
     ret += fi_fabric(fi->fabric_attr, &fabric, NULL);
@@ -112,6 +131,17 @@ static void init_links()
     fi_freeinfo(fi);
 }
 
+static void fini_links()
+{
+    int ret = 0;
+
+    ret += fi_close(&av->fid);
+    ret += fi_close(&domain->fid);
+    ret += fi_close(&fabric->fid);
+
+    DBGASSERT(!ret);
+}
+
 template<typename T>
 class Links
 {
@@ -120,6 +150,30 @@ public:
             : rank_to_addr(cardinality), self(self)
     {
 
+    }
+
+    ~Links()
+    {
+        int ret = 0;
+
+        if (txctx)
+            delete txctx;
+        if (rxctx)
+            delete rxctx;
+        if (ep)
+            ret += fi_close(&ep->fid);
+        if (rxcq)
+            ret += fi_close(&rxcq->fid);
+        if (txcq)
+            ret += fi_close(&txcq->fid);
+
+        txctx = nullptr;
+        rxctx = nullptr;
+        ep = nullptr;
+        rxcq = nullptr;
+        txcq = nullptr;
+
+        DBGASSERT(!ret);
     }
 
     /*
@@ -242,7 +296,7 @@ private:
     rank_t self;
     struct fid_ep *ep = nullptr; //end point
     struct fid_cq *txcq = nullptr, *rxcq = nullptr; //completion queues
-    uint64_t tx_cq_cntr = 0, rx_cq_cntr = 0; //n. of completed send/recv requests
+    fi_context *txctx = nullptr, *rxctx = nullptr;
 
     void create_endpoint(char *node, char *service)
     {
@@ -250,7 +304,9 @@ private:
         int ret = 0;
 
         //get fabric context
+#ifdef GAM_LOG
         fprintf(stderr, "LKS src-endpoint node=%s svc=%s\n", node, service);
+#endif
         uint64_t flags = FI_SOURCE;
         fi_info *fi;
         fi_getinfo_(&fi, node, service, flags);
@@ -283,6 +339,9 @@ private:
 
         DBGASSERT(!ret);
 
+        txctx = new fi_context();
+        rxctx = new fi_context();
+
         //clean-up
         fi_freeinfo(fi);
     }
@@ -298,7 +357,7 @@ private:
     ssize_t fm_post_rx(T *rx_buf, fi_addr_t from)
     {
         int ret;
-        ret = fi_recv(ep, rx_buf, sizeof(T), NULL, from, NULL);
+        ret = fi_recv(ep, rx_buf, sizeof(T), NULL, from, rxctx);
         DBGASSERT(!ret);
         return 0;
     }
@@ -306,18 +365,21 @@ private:
     //post a from-any recv
     ssize_t fm_post_rx(T *buf)
     {
-        int ret;
-        ret = fi_recv(ep, buf, sizeof(T), NULL, FI_ADDR_UNSPEC, NULL);
-        DBGASSERT(!ret);
-        return 0;
+        return fm_post_rx(buf, FI_ADDR_UNSPEC);
     }
 
     //post a send
     ssize_t fm_post_tx(const T *tx_buf, fi_addr_t to)
     {
         int ret;
-        ret = fi_send(ep, tx_buf, sizeof(T), NULL, to, NULL);
-        assert(!ret);
+        while (1)
+        {
+            ret = fi_send(ep, tx_buf, sizeof(T), NULL, to, txctx);
+            if (!ret)
+                break;
+            assert(ret == -FI_EAGAIN);
+        }
+
         return 0;
     }
 
@@ -414,15 +476,29 @@ private:
      */
     ssize_t fm_post_rx(void *rx_buf, size_t size, fi_addr_t from)
     {
-        ssize_t ret = fi_recv(ep, rx_buf, size, NULL, from, NULL);
-        DBGASSERT(!ret);
+        int ret;
+        while (1)
+        {
+            ret = fi_recv(ep, rx_buf, size, NULL, from, rxctx);
+            if (!ret)
+                break;
+            assert(ret == -FI_EAGAIN);
+        }
+
         return 0;
     }
 
     ssize_t fm_post_tx(const void *tx_buf, size_t size, fi_addr_t to)
     {
-        ssize_t ret = fi_send(ep, tx_buf, size, NULL, to, NULL);
-        assert(!ret);
+        int ret;
+        while (1)
+        {
+            ret = fi_send(ep, tx_buf, size, NULL, to, txctx);
+            if (!ret)
+                break;
+            assert(ret == -FI_EAGAIN);
+        }
+
         return 0;
     }
 
