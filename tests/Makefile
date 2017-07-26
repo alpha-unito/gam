@@ -33,7 +33,7 @@ else
 GAM_CMD              = $(GAM_RUN)
 endif
 
-VERBOSE              = #-v
+VERBOSE              = -v
 
 #########################################################################
 #
@@ -54,7 +54,7 @@ LIBS                 = -lpthread `pkg-config --libs libfabric`
 ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
-TARGET               = \
+TARGET               = pingpong \
 simple_public simple_private simple_publish \
 dff2_bb_pipeline dff2_bb_farm dff2_bb_ofarm
 
@@ -68,6 +68,7 @@ dff2_bb_pipeline dff2_bb_farm dff2_bb_ofarm
 
 all: $(TARGET)
 
+pingpong: pingpong.o
 simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
@@ -76,6 +77,7 @@ dff2_bb_farm: dff2_bb_farm.o
 dff2_bb_ofarm: dff2_bb_ofarm.o
 
 test: all
+	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/pingpong
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_public
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_private
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
