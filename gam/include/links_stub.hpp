@@ -21,7 +21,6 @@
 /**
  * @file links_stub.hpp
  * @author Maurizio Drocco
- * @date Mar 19, 2017
  * @brief implements links_stub class
  *
  * @ingroup internals
