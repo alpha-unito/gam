@@ -51,7 +51,7 @@
 #include "Logger.hpp"
 #include "utils.hpp"
 #include "defs.hpp"
-#include "Links.hpp"
+#include "links_stub.hpp"
 #include "GlobalPointer.hpp"
 #include "View.hpp"
 #include "MemoryController.hpp"
@@ -59,14 +59,23 @@
 #include "backend_ptr.hpp"
 #include "TrackingAllocator.hpp"
 
-namespace gam
-{
+#ifdef CONNECTION_LINKS
+#else
+#include "links_implementations/fl_connectionless.hpp"
+#endif
+
+namespace gam {
+
+#ifdef CONNECTION_LINKS
+#else
+template<typename T>
+using Links = links_stub<fl_connectionless,T>;
+#endif
 
 /**
  * Context represents the executor state.
  */
-class Context
-{
+class Context {
 public:
     void init()
     {
@@ -100,8 +109,7 @@ public:
         /*
          * read node and service names from env
          */
-        struct node_t
-        {
+        struct node_t {
             char *host, *svc_pap, *svc_local, *svc_remote;
         } node;
         std::vector<node_t> nodes;
@@ -117,10 +125,8 @@ public:
             env_name = env_prefix + "SVC_DMN_" + std::to_string(i);
             assert((node.svc_remote = std::getenv(env_name.c_str())));
             nodes.push_back(node);
-            LOGLN(
-                    "CTX rank %llu: node=%s svc_pap=%s svc_mem=%s svc_dmn=%s", //
-                    i, node.host, node.svc_pap, node.svc_local,
-                    node.svc_remote);
+            LOGLN("CTX rank %llu: node=%s svc_pap=%s svc_mem=%s svc_dmn=%s", //
+                    i, node.host, node.svc_pap, node.svc_local, node.svc_remote);
         }
 
         /*
@@ -135,25 +141,22 @@ public:
         local_links = new Links<daemon_pointer>(cardinality_, rank_);
         remote_links = new Links<daemon_pointer>(cardinality_, rank_);
 
+        pap_links->init(nodes[rank_].host, nodes[rank_].svc_pap); //recv push (i.e. pull)
+        local_links->init(nodes[rank_].host, nodes[rank_].svc_local); //recv rload rep
+        remote_links->init(nodes[rank_].host, nodes[rank_].svc_remote); //recv rc + rload req
+
         /*
-         * add send links
+         * add peers
          */
         for (unsigned long long i = 0; i < cardinality_; ++i)
         {
             if (i != rank_)
             {
-                pap_links->add(i, nodes[i].host, nodes[i].svc_pap); //send push
-                local_links->add(i, nodes[i].host, nodes[i].svc_remote); //send rc + rload req
-                remote_links->add(i, nodes[i].host, nodes[i].svc_local); //send rload rep
+                pap_links->peer(i, nodes[i].host, nodes[i].svc_pap); //send push
+                local_links->peer(i, nodes[i].host, nodes[i].svc_remote); //send rc + rload req
+                remote_links->peer(i, nodes[i].host, nodes[i].svc_local); //send rload rep
             }
         }
-
-        /*
-         * add receive links
-         */
-        pap_links->add(nodes[rank_].host, nodes[rank_].svc_pap); //recv push (i.e. pull)
-        local_links->add(nodes[rank_].host, nodes[rank_].svc_local); //recv rload rep
-        remote_links->add(nodes[rank_].host, nodes[rank_].svc_remote); //recv rc + rload req
 
         /*
          * spawn daemon thread
@@ -614,17 +617,14 @@ private:
      *
      ***************************************************************************
      */
-    struct pap_pointer
-    {
+    struct pap_pointer {
         GlobalPointer p;
         executor_id author = 0;
         AccessLevel al;
     };
 
-    struct daemon_pointer
-    {
-        enum
-        {
+    struct daemon_pointer {
+        enum {
             RLOAD, RC_INC, RC_DEC, PVT_RESET, DMN_END
         } op;
         size_t size; //remote-load size
@@ -659,8 +659,7 @@ private:
      *
      ***************************************************************************
      */
-    class Daemon
-    {
+    class Daemon {
     public:
         Daemon(Context &ctx)
                 : ctx(ctx), cnt(ctx.cardinality_ - 1)
@@ -705,20 +704,23 @@ private:
                 switch (p.op)
                 {
                 case daemon_pointer::RC_INC:
-                    LOGLN("DMN recv +1 %llu from %lu", a, p.from);
+                    LOGLN("DMN recv +1 %llu from %lu", a, p.from)
+                    ;
                     DBGASSERT(ctx.view.author(a) == ctx.rank_)
                     ;
                     ctx.mc.rc_inc(a);
                     break;
                 case daemon_pointer::RC_DEC:
-                    LOGLN("DMN recv -1 %llu from %lu", a, p.from);
+                    LOGLN("DMN recv -1 %llu from %lu", a, p.from)
+                    ;
                     DBGASSERT(ctx.view.author(a) == ctx.rank())
                     ;
                     if (ctx.mc.rc_dec(a) == 0)
                         ctx.unmap(a);
                     break;
                 case daemon_pointer::PVT_RESET:
-                    LOGLN("DMN recv PVT -1 %llu from %lu", a, p.from);
+                    LOGLN("DMN recv PVT -1 %llu from %lu", a, p.from)
+                    ;
                     DBGASSERT(ctx.view.author(a) == ctx.rank_)
                     ;
                     DBGASSERT(ctx.view.committed(a) != nullptr)
@@ -726,7 +728,8 @@ private:
                     ctx.unmap(a);
                     break;
                 case daemon_pointer::RLOAD:
-                    LOGLN("DMN recv RLOAD %llu from %lu", a, p.from);
+                    LOGLN("DMN recv RLOAD %llu from %lu", a, p.from)
+                    ;
                     DBGASSERT(ctx.view.author(a) == ctx.rank_)
                     ;
                     DBGASSERT(ctx.view.committed(a) != nullptr)
@@ -735,7 +738,8 @@ private:
                             p.size, p.from);
                     break;
                 case daemon_pointer::DMN_END:
-                    LOGLN("DMN recv RC_END from %lu", p.from);
+                    LOGLN("DMN recv RC_END from %lu", p.from)
+                    ;
                     --cnt;
                     break;
                 default:
