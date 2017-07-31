@@ -71,6 +71,7 @@ public:
      */
     void peer(executor_id i, char *node, char *svc)
     {
+        LOGLN("LKS @%p adding PEER rank=%llu node=%s svc=%s", this, i, node, svc);
         internals.add(i, node, svc);
     }
 
@@ -80,6 +81,11 @@ public:
     void init(char *node, char *svc)
     {
         internals.add(node, svc);
+    }
+
+    void finalize()
+    {
+        internals.finalize();
     }
 
     /*

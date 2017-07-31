@@ -60,6 +60,7 @@
 #include "TrackingAllocator.hpp"
 
 #ifdef CONNECTION_LINKS
+#include "links_implementations/fl_connection.hpp"
 #else
 #include "links_implementations/fl_connectionless.hpp"
 #endif
@@ -67,10 +68,15 @@
 namespace gam {
 
 #ifdef CONNECTION_LINKS
+template<typename T>
+using links_impl = fl_connection<T>;
 #else
 template<typename T>
-using Links = links_stub<fl_connectionless,T>;
+using links_impl = fl_connectionless;
 #endif
+
+template<typename T>
+using Links = links_stub<links_impl<T>, T>;
 
 /**
  * Context represents the executor state.
@@ -132,7 +138,7 @@ public:
         /*
          * initialize links
          */
-        init_links(node.host);
+        Links<pap_pointer>::init_links(node.host);
 
         /*
          * create links
@@ -140,10 +146,6 @@ public:
         pap_links = new Links<pap_pointer>(cardinality_, rank_);
         local_links = new Links<daemon_pointer>(cardinality_, rank_);
         remote_links = new Links<daemon_pointer>(cardinality_, rank_);
-
-        pap_links->init(nodes[rank_].host, nodes[rank_].svc_pap); //recv push (i.e. pull)
-        local_links->init(nodes[rank_].host, nodes[rank_].svc_local); //recv rload rep
-        remote_links->init(nodes[rank_].host, nodes[rank_].svc_remote); //recv rc + rload req
 
         /*
          * add peers
@@ -157,6 +159,13 @@ public:
                 remote_links->peer(i, nodes[i].host, nodes[i].svc_local); //send rload rep
             }
         }
+
+        /*
+         * init links
+         */
+        pap_links->init(nodes[rank_].host, nodes[rank_].svc_pap); //recv push (i.e. pull)
+        local_links->init(nodes[rank_].host, nodes[rank_].svc_local); //recv rload rep
+        remote_links->init(nodes[rank_].host, nodes[rank_].svc_remote); //recv rc + rload req
 
         /*
          * spawn daemon thread
@@ -178,12 +187,19 @@ public:
          */
         cache.finalize();
 
+        /*
+         * finalize links
+         */
+        pap_links->finalize();
+        local_links->finalize();
+        remote_links->finalize();
+
         //clean-up
         delete pap_links;
         delete local_links;
         delete remote_links;
 
-        fini_links();
+        Links<pap_pointer>::fini_links();
 
         /*
          * finalize logger

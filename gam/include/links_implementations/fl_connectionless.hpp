@@ -52,44 +52,44 @@ namespace gam {
 static struct fi_av_attr av_attr;
 static struct fid_av *av; //AV table
 
-static void init_links(char *src_node)
-{
-    int ret = 0;
-
-    //query fabric contexts
-#ifdef GAM_LOG
-    fprintf(stderr, "LKS init_links\n");
-#endif
-    uint64_t flags = 0;
-    fi_info *fi;
-    fl_common::fi_getinfo_(&fi, src_node, NULL, flags, FI_EP_RDM);
-
-    fl_common::init(fi);
-
-    //init AV
-    ret += fi_av_open(fl_common::domain(), &av_attr, &av, NULL);
-
-    assert(!ret);
-
-    fi_freeinfo(fi);
-}
-
-static void fini_links()
-{
-    int ret = 0;
-
-    ret += fi_close(&av->fid);
-    DBGASSERT(!ret);
-
-    fl_common::fini();
-}
-
 class fl_connectionless {
 public:
     fl_connectionless(executor_id cardinality, executor_id self)
             : rank_to_addr(cardinality), self(self)
     {
 
+    }
+
+    static void init_links(char *src_node)
+    {
+        int ret = 0;
+
+        //query fabric contexts
+#ifdef GAM_LOG
+        fprintf(stderr, "LKS init_links\n");
+#endif
+        uint64_t flags = 0;
+        fi_info *fi;
+        fl_getinfo(&fi, src_node, NULL, flags, FI_EP_RDM);
+
+        fl_init(fi);
+
+        //init AV
+        ret += fi_av_open(fl_domain_, &av_attr, &av, NULL);
+
+        assert(!ret);
+
+        fi_freeinfo(fi);
+    }
+
+    static void fini_links()
+    {
+        int ret = 0;
+
+        ret += fi_close(&av->fid);
+        DBGASSERT(!ret);
+
+        fl_fini();
     }
 
     /*
@@ -126,6 +126,11 @@ public:
         init_endpoint(node, svc);
     }
 
+    void finalize()
+    {
+        fl_release_endpoint(&ep_, &txcq, &rxcq);
+    }
+
     /*
      ***************************************************************************
      *
@@ -136,29 +141,29 @@ public:
     void broadcast(const void *p, size_t size)
     {
         ssize_t ret = 0;
-        rank_t to;
+        executor_id to;
         for (to = 0; to < self; ++to)
-            ret += fl.fl_tx(p, size, rank_to_addr[to]);
+            ret += fl_tx(ep_, txcq, p, size, rank_to_addr[to]);
         for (to = self + 1; to < rank_to_addr.size(); ++to)
-            ret += fl.fl_tx(p, size, rank_to_addr[to]);
+            ret += fl_tx(ep_, txcq, p, size, rank_to_addr[to]);
         DBGASSERT(!ret);
     }
 
     void raw_send(const void *p, const size_t size, const executor_id to)
     {
-        ssize_t ret = fl.fl_tx(p, size, rank_to_addr[to]);
+        ssize_t ret = fl_tx(ep_, txcq, p, size, rank_to_addr[to]);
         DBGASSERT(!ret);
     }
 
     void raw_recv(void *p, const size_t size, const executor_id from)
     {
-        ssize_t ret = fl.fl_rx(p, size, rank_to_addr[from]);
+        ssize_t ret = rx(p, size, rank_to_addr[from]);
         DBGASSERT(!ret);
     }
 
     void raw_recv(void *p, const size_t size)
     {
-        ssize_t ret = fl.fl_rx(p, size, FI_ADDR_UNSPEC);
+        ssize_t ret = rx(p, size, FI_ADDR_UNSPEC);
         DBGASSERT(!ret);
     }
 
@@ -169,29 +174,31 @@ public:
      *
      ***************************************************************************
      */
-    void nb_send(const void *p, const size_t size, const executor_id to)
-    {
-        ssize_t ret = fl.fl_post_tx(p, size, rank_to_addr[to]);
-        DBGASSERT(!ret);
-    }
-
     void nb_recv(void *p, const size_t size)
     {
-        ssize_t ret = fl.fl_post_rx(p, size, FI_ADDR_UNSPEC);
+        ssize_t ret = fl_post_rx(ep_, p, size, FI_ADDR_UNSPEC);
         DBGASSERT(!ret);
     }
 
     bool nb_poll()
     {
-        return fl.nb_poll();
+        struct fi_cq_entry cq_entry;
+        ssize_t ret = fi_cq_read(rxcq, &cq_entry, 1); //non-blocking pop
+        if (ret > 0)
+            return true;
+        else
+        {
+            DBGASSERT(ret == -FI_EAGAIN);
+            return false;
+        }
     }
 
 private:
-    fl_common fl;
+    struct fid_ep *ep_ = nullptr; //end point
+    struct fid_cq *txcq = nullptr, *rxcq = nullptr; //completion queues
 
-    typedef std::vector<fi_addr_t>::size_type rank_t;
     std::vector<fi_addr_t> rank_to_addr;
-    rank_t self;
+    executor_id self;
 
     void init_endpoint(char *node, char *service)
     {
@@ -202,18 +209,32 @@ private:
         fprintf(stderr, "LKS src-endpoint node=%s svc=%s\n", node, service);
 #endif
         fi_info *fi;
-        fl_common::fi_getinfo_(&fi, node, service, FI_SOURCE, FI_EP_RDM);
+        fl_getinfo(&fi, node, service, FI_SOURCE, FI_EP_RDM);
 
-        fl.create_endpoint(fi);
+        fl_create_endpoint(fi, &ep_, &txcq, &rxcq);
 
         //bind EP to AV
-        ret = fi_ep_bind(fl.ep(), &av->fid, 0);
+        ret = fi_ep_bind(ep_, &av->fid, 0);
         DBGASSERT(!ret);
 
-        fl.enable_endpoint();
+        ret = fi_enable(ep_);
+        DBGASSERT(!ret);
 
         //clean-up
         fi_freeinfo(fi);
+    }
+
+    ssize_t rx(void *rx_buf, size_t size, fi_addr_t from)
+    {
+        ssize_t ret = 0;
+
+        //recv
+        ret += fl_post_rx(ep_, rx_buf, size, from);
+
+        //wait on RX CQ
+        ret += fl_spin_for_comp(rxcq);
+
+        return ret;
     }
 };
 
