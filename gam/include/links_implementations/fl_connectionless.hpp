@@ -54,7 +54,7 @@ static struct fid_av *av; //AV table
 
 class fl_connectionless {
 public:
-    fl_connectionless(executor_id cardinality, executor_id self)
+    fl_connectionless(executor_id cardinality, executor_id self, const char *)
             : rank_to_addr(cardinality), self(self)
     {
 
@@ -64,22 +64,21 @@ public:
     {
         int ret = 0;
 
+        fl_node(src_node);
+
         //query fabric contexts
 #ifdef GAM_LOG
         fprintf(stderr, "LKS init_links\n");
 #endif
         uint64_t flags = 0;
-        fi_info *fi;
-        fl_getinfo(&fi, src_node, NULL, flags, FI_EP_RDM);
+        fl_getinfo(&fl_info_, src_node, NULL, flags, FI_EP_MSG, FI_DIRECTED_RECV);
 
-        fl_init(fi);
+        fl_init(fl_info_);
 
         //init AV
         ret += fi_av_open(fl_domain_, &av_attr, &av, NULL);
 
-        assert(!ret);
-
-        fi_freeinfo(fi);
+        DBGASSERT(!ret);
     }
 
     static void fini_links()
@@ -90,6 +89,7 @@ public:
         DBGASSERT(!ret);
 
         fl_fini();
+        fi_freeinfo(fl_info_);
     }
 
     /*
@@ -128,7 +128,13 @@ public:
 
     void finalize()
     {
-        fl_release_endpoint(&ep_, &txcq, &rxcq);
+        int ret = FI_SUCCESS;
+
+        ret += fi_close(&ep_->fid);
+        ret += fi_close(&rxcq->fid);
+        ret += fi_close(&txcq->fid);
+
+        DBGASSERT(!ret);
     }
 
     /*
@@ -202,22 +208,39 @@ private:
 
     void init_endpoint(char *node, char *service)
     {
-        int ret;
+        int ret = FI_SUCCESS;
 
         //get fabric context
 #ifdef GAM_LOG
         fprintf(stderr, "LKS src-endpoint node=%s svc=%s\n", node, service);
 #endif
         fi_info *fi;
-        fl_getinfo(&fi, node, service, FI_SOURCE, FI_EP_RDM);
+        fl_getinfo(&fi, node, service, FI_SOURCE, FI_EP_RDM, FI_DIRECTED_RECV);
 
-        fl_create_endpoint(fi, &ep_, &txcq, &rxcq);
+        struct fi_cq_attr cq_attr;
+
+        //create endpoint
+        ret += fi_endpoint(fl_domain_, fi, &ep_, NULL);
+
+        //prepare CQ attributes
+        memset(&cq_attr, 0, sizeof(fi_cq_attr));
+        cq_attr.format = FI_CQ_FORMAT_CONTEXT;
+        cq_attr.wait_obj = FI_WAIT_NONE; //async
+
+        //init TX CQ and bind
+        cq_attr.size = fi->tx_attr->size;
+        ret += fi_cq_open(fl_domain_, &cq_attr, &txcq, NULL);
+        ret += fi_ep_bind(ep_, &txcq->fid, FI_SEND);
+
+        //init RX CQ and bind
+        cq_attr.size = fi->rx_attr->size;
+        ret += fi_cq_open(fl_domain_, &cq_attr, &rxcq, NULL);
+        ret += fi_ep_bind(ep_, &rxcq->fid, FI_RECV);
 
         //bind EP to AV
-        ret = fi_ep_bind(ep_, &av->fid, 0);
-        DBGASSERT(!ret);
+        ret += fi_ep_bind(ep_, &av->fid, 0);
 
-        ret = fi_enable(ep_);
+        ret += fi_enable(ep_);
         DBGASSERT(!ret);
 
         //clean-up
@@ -236,7 +259,8 @@ private:
 
         return ret;
     }
-};
+}
+;
 
 } /* namespace gam */
 

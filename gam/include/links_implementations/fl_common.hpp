@@ -40,20 +40,25 @@
 
 namespace gam {
 
+static struct fi_info *fl_info_;
 static struct fid_fabric *fl_fabric_;
 static struct fid_domain *fl_domain_;
+static const char *fl_node_;
+
+void fl_node(const char *n)
+{
+    fl_node_ = n;
+}
 
 void fl_getinfo(fi_info **fi, //
-        char *node, char *service, //
-        uint64_t flags, enum fi_ep_type ep_type)
+        const char *node, const char *service, //
+        uint64_t flags, enum fi_ep_type ep_type, uint64_t caps)
 {
     fi_info *hints = fi_allocinfo();
     int ret = 0;
 
-    //todo check hints
-
     //prepare for querying fabric contexts
-    hints->caps = FI_MSG | FI_DIRECTED_RECV;
+    hints->caps = FI_MSG | caps;
     hints->ep_attr->type = ep_type;
 
     //query fabric contexts
@@ -118,52 +123,6 @@ void fl_fini()
     ret += fi_close(&fl_fabric_->fid);
 
     DBGASSERT(!ret);
-}
-
-void fl_create_endpoint(fi_info *fi, fid_ep **ep, fid_cq **txcq, fid_cq **rxcq)
-{
-    struct fi_cq_attr cq_attr;
-    int ret = 0;
-
-    //init TX CQ (completion queue)
-    memset(&cq_attr, 0, sizeof(fi_cq_attr));
-    cq_attr.format = FI_CQ_FORMAT_CONTEXT;
-    cq_attr.wait_obj = FI_WAIT_NONE; //async
-    cq_attr.size = fi->tx_attr->size;
-    ret += fi_cq_open(fl_domain_, &cq_attr, txcq, txcq);
-
-    //init RX CQ
-    cq_attr.size = fi->rx_attr->size;
-    ret += fi_cq_open(fl_domain_, &cq_attr, rxcq, rxcq);
-
-    //create endpoint
-    ret += fi_endpoint(fl_domain_, fi, ep, NULL);
-
-    //bind EP to TX CQ
-    ret += fi_ep_bind(*ep, &(*txcq)->fid, FI_SEND);
-
-    //bind EP to RX CQ
-    ret += fi_ep_bind(*ep, &(*rxcq)->fid, FI_RECV);
-
-    DBGASSERT(!ret);
-}
-
-void fl_release_endpoint(fid_ep **ep, fid_cq **txcq, fid_cq **rxcq)
-{
-    int ret = 0;
-
-    if (ep)
-        ret += fi_close(&(*ep)->fid);
-    if (rxcq)
-        ret += fi_close(&(*rxcq)->fid);
-    if (txcq)
-        ret += fi_close(&(*txcq)->fid);
-
-    DBGASSERT(!ret);
-
-    *ep = nullptr;
-    *rxcq = nullptr;
-    *txcq = nullptr;
 }
 
 /*

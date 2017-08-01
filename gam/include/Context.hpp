@@ -143,9 +143,9 @@ public:
         /*
          * create links
          */
-        pap_links = new Links<pap_pointer>(cardinality_, rank_);
-        local_links = new Links<daemon_pointer>(cardinality_, rank_);
-        remote_links = new Links<daemon_pointer>(cardinality_, rank_);
+        pap_links = new Links<pap_pointer>(cardinality_, rank_, nodes[rank_].svc_pap);
+        local_links = new Links<daemon_pointer>(cardinality_, rank_, nodes[rank_].svc_local);
+        remote_links = new Links<daemon_pointer>(cardinality_, rank_, nodes[rank_].svc_remote);
 
         /*
          * add peers

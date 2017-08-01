@@ -47,8 +47,8 @@ namespace gam {
 template<typename impl, typename T>
 class links_stub {
 public:
-    links_stub(executor_id cardinality, executor_id self)
-            : internals(cardinality, self), self_(self)
+    links_stub(executor_id cardinality, executor_id self, const char *svc)
+            : internals(cardinality, self, svc), self_(self)
     {
     }
 
