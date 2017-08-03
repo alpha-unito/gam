@@ -56,7 +56,7 @@ void r0()
 void r1()
 {
     /* pull private pointer from 0 */
-    auto p = gam::pull_private<int>(0);
+    auto p = gam::pull_private<int>(); //from-any just for testing
 
     /* push back to 0 */
     p.push(0);

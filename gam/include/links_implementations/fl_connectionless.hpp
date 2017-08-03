@@ -54,7 +54,8 @@ static struct fid_av *av; //AV table
 
 class fl_connectionless {
 public:
-    fl_connectionless(executor_id cardinality, executor_id self, const char *)
+    fl_connectionless(executor_id cardinality, executor_id self, //
+            const char *, size_t)
             : rank_to_addr(cardinality), self(self)
     {
 
@@ -71,7 +72,8 @@ public:
         fprintf(stderr, "LKS init_links\n");
 #endif
         uint64_t flags = 0;
-        fl_getinfo(&fl_info_, src_node, NULL, flags, FI_EP_MSG, FI_DIRECTED_RECV);
+        fl_getinfo(&fl_info_, src_node, NULL, flags, FI_EP_RDM,
+                FI_DIRECTED_RECV);
 
         fl_init(fl_info_);
 

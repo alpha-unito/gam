@@ -48,7 +48,7 @@ template<typename impl, typename T>
 class links_stub {
 public:
     links_stub(executor_id cardinality, executor_id self, const char *svc)
-            : internals(cardinality, self, svc), self_(self)
+            : internals(cardinality, self, svc, sizeof(T)), self_(self)
     {
     }
 
@@ -71,7 +71,8 @@ public:
      */
     void peer(executor_id i, char *node, char *svc)
     {
-        LOGLN("LKS @%p adding PEER rank=%llu node=%s svc=%s", this, i, node, svc);
+        LOGLN("LKS @%p adding PEER rank=%llu node=%s svc=%s", this, i, node,
+                svc);
         internals.add(i, node, svc);
     }
 
@@ -81,6 +82,11 @@ public:
     void init(char *node, char *svc)
     {
         internals.add(node, svc);
+    }
+
+    void sync()
+    {
+//        internals.sync();
     }
 
     void finalize()

@@ -112,7 +112,7 @@ void fl_init(fi_info *fi)
     //init domain
     ret += fi_domain(fl_fabric_, fi, &fl_domain_, NULL);
 
-    assert(!ret);
+    DBGASSERT(!ret);
 }
 
 void fl_fini()
@@ -121,7 +121,6 @@ void fl_fini()
 
     ret += fi_close(&fl_domain_->fid);
     ret += fi_close(&fl_fabric_->fid);
-
     DBGASSERT(!ret);
 }
 
