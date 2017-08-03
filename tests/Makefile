@@ -25,12 +25,17 @@
 GAM_HOME             ?= ../gam
 GAM_INCS             = $(GAM_HOME)/include
 GAM_RUN              = $(GAM_HOME)/bin/gamrun
+GAM_RUN_LOCAL        = $(GAM_HOME)/bin/gamrun-local
 GAM_CONF             ?= $(GAM_HOME)/conf/local.conf
+GAM_LOCALHOST        ?= localhost
 
 ifdef GAM_TIMEOUT
-GAM_CMD              = timeout -s HUP $(GAM_TIMEOUT)s $(GAM_RUN) 
+GAM_CMD              = timeout -s HUP $(GAM_TIMEOUT)s $(GAM_RUN)
+GAM_CMD_LOCAL        = timeout -s HUP $(GAM_TIMEOUT)s $(GAM_RUN_LOCAL)
 else
 GAM_CMD              = $(GAM_RUN)
+GAM_CMD_LOCAL        = $(GAM_RUN_LOCAL)
+
 endif
 
 VERBOSE              = -v
@@ -46,8 +51,8 @@ VERBOSE              = -v
 CXX 		             ?= g++
 LINK_OPT             = 
 VERSION              = 
-OPTIMIZE_FLAGS       = -O3 -g0
-CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG -DDFF2_LOG
+OPTIMIZE_FLAGS       = -O0 -g3
+CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG -DDFF2_LOG #-DCONNECTION_LINKS
 LDFLAGS              = 
 INCS                 = -I$(GAM_INCS) `pkg-config --cflags libfabric`
 LIBS                 = -lpthread `pkg-config --libs libfabric`
@@ -84,6 +89,15 @@ test: all
 	$(GAM_CMD) $(VERBOSE) -n 4 -f $(GAM_CONF) $(PWD)/dff2_bb_pipeline
 	$(GAM_CMD) $(VERBOSE) -n 6 -f $(GAM_CONF) $(PWD)/dff2_bb_farm
 	$(GAM_CMD) $(VERBOSE) -n 6 -f $(GAM_CONF) $(PWD)/dff2_bb_ofarm
+
+test-local: all
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_public
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_private
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 4 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_pipeline
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 6 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_farm
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 6 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_ofarm
 	
 kill:
 	killall $(TARGET)
