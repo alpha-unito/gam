@@ -35,11 +35,11 @@ inflight = deque()
 exec_map = dict()
 out_map = dict()
 
-def ssh_execute(host, cmd):
+def ssh_execute(host, port, cmd):
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host)
+    ssh.connect(host, port)
     _in, _out, _err = ssh.exec_command(cmd, get_pty=True)
     return ssh, _out.channel
 
@@ -63,6 +63,7 @@ parser = argparse.ArgumentParser(description='This is the gam launcher.')
 parser.add_argument('-n', '--cardinality', help='Number of executors',
                     type=long, required=True)
 parser.add_argument('-f', '--topology', help='Topology file', required=True)
+parser.add_argument('-p', '--port', help='SSH port', type=long, default=22)
 parser.add_argument('-v', '--verbose', help='Set verbose mode',
                     action="store_true")
 parser.add_argument('command', help='Command string', nargs='+')
@@ -93,7 +94,7 @@ os.symlink(log_prefix, latest_link)
 # launch processes
 for e in range(args.cardinality):
     # compose remote command line
-    CMD = ""
+    CMD = "cd {0}; ".format(os.environ['PWD'])
     CMD += "GAM_LOG_PREFIX={0}".format(log_prefix)
     CMD += " GAM_RANK={0} GAM_CARDINALITY={1}".format(e, args.cardinality)
     for e_ in range(args.cardinality):
@@ -116,7 +117,7 @@ for e in range(args.cardinality):
         print "> host = " + HOST
         print CMD
     
-    p, _out = ssh_execute(HOST, CMD)
+    p, _out = ssh_execute(HOST, args.port, CMD)
 
     inflight.append(p)
     exec_map[p] = e
