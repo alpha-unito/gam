@@ -1,0 +1,17 @@
+dist: trusty
+sudo: false
+language: c
+compiler:
+    - clang
+    - gcc
+os:
+    - linux
+    - osx
+addons:
+    apt:
+        packages:
+            - libfabric
+
+script:
+    - cd tests
+    - make test-local
