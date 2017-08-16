@@ -84,6 +84,10 @@ public:
         descriptor_ = d;
     }
 
+    bool operator==(const GlobalPointer &gp) {
+        return this->address() == gp.address();
+    }
+
     /*
      * check if the pointer represents a global address
      *
