@@ -47,7 +47,7 @@ namespace gam {
 template<typename T>
 class public_ptr {
 public:
-    public_ptr()
+    public_ptr() noexcept
     {
     }
 
@@ -61,7 +61,7 @@ public:
      * @param d the deleter
      */
     template<typename Deleter>
-    public_ptr(T * const lp, Deleter d)
+    public_ptr(T * const lp, Deleter d) //todo noexcept
             : public_ptr()
     {
         if (lp)
@@ -78,7 +78,7 @@ public:
      *
      * @param p the global pointer to wrap
      */
-    public_ptr(const GlobalPointer &p)
+    public_ptr(const GlobalPointer &p) noexcept
             : internal_gp(p)
     {
         if (p.is_address() || p.address() != 0)
@@ -101,7 +101,7 @@ public:
      *
      ***************************************************************************
      */
-    public_ptr(const public_ptr &copy)
+    public_ptr(const public_ptr &copy) noexcept
             : internal_gp(copy.internal_gp)
     {
         LOGLN_OS("PUB copy-constructor global=" << internal_gp);
@@ -110,7 +110,7 @@ public:
             ctx.rc_inc(internal_gp);
     }
 
-    public_ptr &operator=(const public_ptr &copy)
+    public_ptr &operator=(const public_ptr &copy) noexcept
     {
         LOGLN_OS("PUB copy-assignment obj=" << copy << " sub=" << *this);
 
@@ -132,7 +132,7 @@ public:
      *
      ***************************************************************************
      */
-    public_ptr(public_ptr &&other)
+    public_ptr(public_ptr &&other) noexcept
             : internal_gp(other.internal_gp)
     {
         LOGLN_OS("PUB move-constructor global=" << internal_gp);
@@ -141,7 +141,7 @@ public:
         other.internal_gp.address(0);
     }
 
-    public_ptr &operator=(public_ptr &&other)
+    public_ptr &operator=(public_ptr &&other) noexcept
     {
         LOGLN_OS("PUB move-assignment obj=" << other << " sub=" << *this);
 
@@ -167,7 +167,7 @@ public:
      *
      * After completion, the argument private pointer is destroyed.
      */
-    public_ptr(private_ptr<T> &&p)
+    explicit public_ptr(private_ptr<T> &&p)
     {
         GlobalPointer gp = p.get();
 
@@ -244,7 +244,7 @@ public:
      *
      * @param to is the executor to push to
      */
-    void push(const executor_id to) const
+    void push(executor_id to) const
     {
         USRASSERT(to != ctx.rank() && to < ctx.cardinality());
         if (internal_gp.is_address())
@@ -265,13 +265,13 @@ public:
      *
      ***************************************************************************
      */
-    void reset()
+    void reset() noexcept
     {
         ctx.rc_dec(internal_gp);
         internal_gp.address(0);
     }
 
-    GlobalPointer get() const
+    GlobalPointer get() const noexcept
     {
         return internal_gp;
     }
@@ -291,11 +291,11 @@ public:
      *
      ***************************************************************************
      */
-    public_ptr(nullptr_t)
+    public_ptr(nullptr_t) noexcept
     {
     }
 
-    public_ptr& operator=(nullptr_t)
+    public_ptr& operator=(nullptr_t)  noexcept
     {
         if (internal_gp.is_address())
         {
@@ -306,22 +306,22 @@ public:
         return *this;
     }
 
-    bool operator==(nullptr_t)
+    bool operator==(nullptr_t)  noexcept
     {
         return internal_gp.address() == 0;
     }
 
-    friend bool operator==(nullptr_t, const public_ptr& __x)
+    friend bool operator==(nullptr_t, const public_ptr& __x)  noexcept
     {
         return __x == nullptr;
     }
 
-    bool operator!=(nullptr_t)
+    bool operator!=(nullptr_t)  noexcept
     {
         return internal_gp.address() != 0;
     }
 
-    friend bool operator!=(nullptr_t, const public_ptr& __x)
+    friend bool operator!=(nullptr_t, const public_ptr& __x)  noexcept
     {
         return __x != nullptr;
     }
@@ -367,7 +367,7 @@ public_ptr<T> pull_public(const executor_id from)
  * @retval the incoming pointer
  */
 template<typename T>
-public_ptr<T> pull_public()
+public_ptr<T> pull_public() noexcept
 {
     return public_ptr<T>(ctx.pull_public());
 }
