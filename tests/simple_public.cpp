@@ -103,9 +103,6 @@ void r2()
  */
 int main(int argc, char * argv[])
 {
-    /* initialize gam environment */
-    gam::init();
-
     /* rank-specific code */
     switch (gam::rank())
     {
@@ -119,9 +116,6 @@ int main(int argc, char * argv[])
         r2();
         break;
     }
-
-    /* finalize gam environment */
-    gam::finalize();
 
     return 0;
 }

@@ -90,9 +90,6 @@ public:
 
         DFF2_PROFILER_HRT(t0);
 
-        /* initialize gam runtime */
-        gam::init();
-
         /* initialize the logger */
         char *env = std::getenv("GAM_LOG_PREFIX");
         assert(env);
@@ -134,9 +131,6 @@ public:
 
         /* finalize the logger */
         DFF2_LOGGER_FINALIZE(gam::rank());
-
-        /* finalize gam runtime */
-        gam::finalize();
     }
 
 private:

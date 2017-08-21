@@ -57,7 +57,7 @@
 #include "MemoryController.hpp"
 #include "Cache.hpp"
 #include "backend_ptr.hpp"
-#include "TrackingAllocator.hpp"
+#include "wrapped_allocator.hpp"
 
 #ifdef CONNECTION_LINKS
 #include "links_implementations/fl_connection.hpp"
@@ -79,13 +79,22 @@ using links_impl = fl_connectionless;
 template<typename T>
 using Links = links_stub<links_impl<T>, T>;
 
+/*
+ * forward declarations for local memory allocation
+ */
+inline void FREE(void *ptr);
+
+template<typename T>
+inline void TYPED_FREE(T *ptr);
+
 /**
  * Context represents the executor state.
  */
 class Context
 {
 public:
-    void init()
+    Context()
+            : cache(local_allocator)
     {
         char *env, *tmp;
 
@@ -181,7 +190,7 @@ public:
         daemon = new std::thread(Daemon(*this));
     }
 
-    void finalize()
+    ~Context()
     {
         /*
          * finalize and join daemon thread
@@ -405,7 +414,7 @@ public:
         DBGASSERT(view.access_level(a) == AL_PUBLIC);
 
         /* allocate local memory */
-        T *lp = (T *) MALLOC(sizeof(T));
+        T *lp = (T *) local_malloc(sizeof(T));
 
         /* load either locally or remotely */
         if (view.author(a) == rank_)
@@ -486,9 +495,9 @@ public:
             DBGASSERT(!view.has_child(a));
 
             /* allocate backend memory */
-            T* tmp = (T*) MALLOC(sizeof(T));
+            T* tmp = (T*) local_malloc(sizeof(T));
             using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-            auto tbp_ = NEW<bp_t>(tmp, TYPED_FREE<T>);
+            auto tbp_ = local_new<bp_t>(tmp, TYPED_FREE<T>);
 
             /* remote load */
             forward_load(tbp_->typed_get(), p);
@@ -621,6 +630,41 @@ public:
         local_links->send(dp, to);
     }
 
+    /*
+     ***************************************************************************
+     *
+     * Tracking local memory allocation
+     *
+     ***************************************************************************
+     */
+    void *local_malloc(size_t size)
+    {
+        return local_allocator.malloc(size);
+    }
+
+    void local_free(void *ptr)
+    {
+        local_allocator.free(ptr);
+    }
+
+    template<typename T>
+    void local_typed_free(T *ptr)
+    {
+        local_allocator.free((void *)ptr);
+    }
+
+    template<typename obj_t, typename ... Params>
+    obj_t *local_new(Params ... p)
+    {
+        return local_allocator.new_<obj_t>(p...);
+    }
+
+    template<typename T>
+    void local_delete(T *ptr)
+    {
+        local_allocator.delete_(ptr);
+    }
+
 private:
     executor_id rank_, cardinality_;
     std::vector<std::string> hostnames;
@@ -677,6 +721,11 @@ private:
      * - sending   remote-load responses (svc C)
      */
     Links<daemon_pointer> *remote_links;
+
+    /*
+     * Tracking local memory allocator
+     */
+    wrapped_allocator local_allocator;
 
     /*
      ***************************************************************************
@@ -788,7 +837,7 @@ private:
         /* implicit commit */
         DBGASSERT(view.committed(a) == nullptr);
         using bp_t = backend_typed_ptr<T, Deleter>;
-        bp_t *bp = NEW<bp_t>(lp, d);
+        bp_t *bp = local_new<bp_t>(lp, d);
         view.bind_committed(a, bp);
 
         /* update view information */
@@ -809,7 +858,7 @@ private:
         view.unmap(a);
 
         /* finally release committed memory */
-        DELETE(cm);
+        local_delete(cm);
     }
 
     GlobalPointer pulled_public(const pap_pointer &buf)
@@ -894,9 +943,9 @@ private:
 
         /* allocate backend memory */
         DBGASSERT(view.committed(a) == nullptr);
-        T* tmp = (T*) MALLOC(sizeof(T));
+        T* tmp = (T*) local_malloc(sizeof(T));
         using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-        bp_t *bp = NEW<bp_t>(tmp, TYPED_FREE<T>);
+        bp_t *bp = local_new<bp_t>(tmp, TYPED_FREE<T>);
 
         /* bind parenthood */
         T *child = bp->typed_get();
@@ -961,6 +1010,37 @@ private:
 };
 
 static Context ctx;
+
+/*
+ * shortcuts
+ */
+inline void *MALLOC(size_t size)
+{
+    return ctx.local_malloc(size);
+}
+
+inline void FREE(void *ptr)
+{
+    ctx.local_free(ptr);
+}
+
+template<typename T>
+inline void TYPED_FREE(T *ptr)
+{
+    ctx.local_typed_free(ptr);
+}
+
+template<typename obj_t, typename ... Params>
+inline obj_t *NEW(Params ... p)
+{
+    return ctx.local_new<obj_t>(p...);
+}
+
+template<typename T>
+inline void DELETE(T *ptr)
+{
+    return ctx.local_delete(ptr);
+}
 
 } /* namespace gam */
 

@@ -33,16 +33,24 @@
 #include <unordered_map>
 
 #include "utils.hpp"
-#include "TrackingAllocator.hpp"
+#include "wrapped_allocator.hpp"
 
-namespace gam {
+namespace gam
+{
 
 class Cache
 {
 public:
-    void finalize() {
-        for(auto it : cache_map)
-            FREE(const_cast<void *>(it.second));
+
+    Cache(wrapped_allocator &wa_)
+            : wa(wa_)
+    {
+    }
+
+    void finalize()
+    {
+        for (auto it : cache_map)
+            wa.free(const_cast<void *>(it.second));
         cache_map.clear();
     }
 
@@ -52,7 +60,7 @@ public:
         if (!available())
             make_room();
         DBGASSERT(cache_map.find(a) == cache_map.end());
-        void *slot = MALLOC(sizeof(T));
+        void *slot = wa.malloc(sizeof(T));
         memcpy(slot, p, sizeof(T));
         cache_map[a] = slot;
         LOGLN_OS("CTX cache store a=" << a << " p=" << slot);
@@ -73,6 +81,7 @@ public:
 
 private:
     std::unordered_map<uint64_t, const void *> cache_map;
+    wrapped_allocator &wa;
 
     //todo fixed capacity or whatever
     bool available()
