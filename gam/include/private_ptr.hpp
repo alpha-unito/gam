@@ -309,7 +309,7 @@ internal_gp            (other.internal_gp)
             template<typename Deleter>
             void make(T *lp, Deleter d) //todo noexcept
             {
-                internal_gp = ctx.mmap_private(lp, d);
+                internal_gp = ctx.mmap_private(*lp, d);
                 DBGASSERT(internal_gp.is_address());
             }
 

@@ -332,7 +332,7 @@ private:
     template<typename Deleter>
     void make(T *lp, Deleter d)
     {
-        internal_gp = ctx.mmap_public(lp, d);
+        internal_gp = ctx.mmap_public(*lp, d);
         DBGASSERT(internal_gp.is_address());
 
         /* init reference counter */
