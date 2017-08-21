@@ -41,7 +41,7 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
 
-#include "defs.hpp"
+#include "../defs.hpp"
 #include "GlobalPointer.hpp"
 #include "Logger.hpp"
 
