@@ -50,18 +50,18 @@ namespace gam {
 /**
  * @brief initializes GAM executor
  */
-void init()
-{
-    ctx.init();
-}
-
-/**
- * @brief finalizes GAM executor
- */
-void finalize()
-{
-    ctx.finalize();
-}
+//void init()
+//{
+//    ctx.init();
+//}
+//
+///**
+// * @brief finalizes GAM executor
+// */
+//void finalize()
+//{
+//    ctx.finalize();
+//}
 
 /**
  * @brief returns GAM rank

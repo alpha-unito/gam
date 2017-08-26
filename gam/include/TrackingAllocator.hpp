@@ -59,12 +59,6 @@ public:
         }
     }
 
-    static TrackingAllocator *getAllocator()
-    {
-        static TrackingAllocator a;
-        return &a;
-    }
-
     void *malloc(size_t size)
     {
         void *res = ::malloc(size);
@@ -139,63 +133,7 @@ public:
 private:
     std::mutex mtx;
     alloc_map_t inflight;
-
-    TrackingAllocator()
-    {
-    }
 };
-
-/*
- * shortcuts
- */
-inline void *MALLOC(size_t size)
-{
-#ifdef GAM_DBG
-
-    return gam::TrackingAllocator::getAllocator()->malloc(size);
-#else
-    return ::malloc(size);
-#endif
-}
-
-inline void FREE(void *ptr)
-{
-#ifdef GAM_DBG
-    gam::TrackingAllocator::getAllocator()->free(ptr);
-#else
-    ::free(ptr);
-#endif
-}
-
-template<typename T>
-inline void TYPED_FREE(T *ptr)
-{
-    FREE((void *) ptr);
-}
-
-template<typename obj_t, typename ... Params>
-inline obj_t *NEW(Params ... p)
-{
-#ifdef GAM_DBG
-    obj_t *ptr = (obj_t *) MALLOC(sizeof(obj_t));
-    gam::TrackingAllocator::getAllocator()->new_(ptr);
-    return new (ptr) obj_t(p...);
-#else
-    return new obj_t(p...);
-#endif
-}
-
-template<typename T>
-inline void DELETE(T *ptr)
-{
-#ifdef GAM_DBG
-    ptr->~T();
-    gam::TrackingAllocator::getAllocator()->delete_(ptr);
-    FREE(ptr);
-#else
-    delete (ptr);
-#endif
-}
 
 }
 /* namespace gam */
