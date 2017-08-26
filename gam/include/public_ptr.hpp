@@ -167,7 +167,7 @@ public:
      *
      * After completion, the argument private pointer is destroyed.
      */
-    explicit public_ptr(private_ptr<T> &&p)
+    explicit public_ptr(private_ptr<T> &&p) noexcept
     {
         GlobalPointer gp = p.get();
 
@@ -332,7 +332,7 @@ private:
     template<typename Deleter>
     void make(T *lp, Deleter d)
     {
-        internal_gp = ctx.mmap_public(lp, d);
+        internal_gp = ctx.mmap_public(*lp, d);
         DBGASSERT(internal_gp.is_address());
 
         /* init reference counter */

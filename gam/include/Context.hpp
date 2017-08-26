@@ -236,9 +236,9 @@ public:
      * map a fresh global address (for public memory) to local pointer
      */
     template<class T, typename Deleter>
-    GlobalPointer mmap_public(T *lp, Deleter d)
+    GlobalPointer mmap_public(T &lp, Deleter d)
     {
-        GlobalPointer res = mmap_global<AL_PUBLIC>(lp, d);
+        GlobalPointer res = mmap_global<AL_PUBLIC>(&lp, d);
         uint64_t a = res.address();
 
         /* initialize owner and child fields with void values */
@@ -252,17 +252,17 @@ public:
      * map a fresh global address (for public memory) to local pointer
      */
     template<class T, typename Deleter>
-    GlobalPointer mmap_private(T *lp, Deleter d)
+    GlobalPointer mmap_private(T &lp, Deleter d)
     {
-        GlobalPointer res = mmap_global<AL_PRIVATE>(lp, d);
+        GlobalPointer res = mmap_global<AL_PRIVATE>(&lp, d);
         uint64_t a = res.address();
 
         /* update owner */
         view.bind_owner(a, rank_);
 
         /* update parenthood information */
-        view.bind_parent(lp, a);
-        view.bind_child(a, lp);
+        view.bind_parent(&lp, a);
+        view.bind_child(a, &lp);
 
         return res;
     }
