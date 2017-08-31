@@ -355,7 +355,7 @@ public_ptr<_Tp> make_public(_Args&&... __args)
  * @retval the incoming pointer
  */
 template<typename T>
-public_ptr<T> pull_public(const executor_id from)
+public_ptr<T> pull_public(executor_id from)
 {
     USRASSERT(from != ctx.rank() && from < ctx.cardinality());
     return public_ptr<T>(ctx.pull_public(from));
