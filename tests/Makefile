@@ -44,7 +44,6 @@ VERBOSE              = -v
 #
 # some possible options to exercise:
 #  - DGAM_LOG               enable logging
-#  - DDFF2_LOG              enable logging of DFF2 programs
 #  - DGAM_DBG               enable internal debugging
 #
 #########################################################################
@@ -52,7 +51,7 @@ CXX 		             ?= g++
 LINK_OPT             = 
 VERSION              = 
 OPTIMIZE_FLAGS       = -O0 -g3
-CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG -DDFF2_LOG #-DCONNECTION_LINKS
+CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG
 LDFLAGS              = 
 INCS                 = -I$(GAM_INCS) `pkg-config --cflags libfabric`
 LIBS                 = -lpthread `pkg-config --libs libfabric`
@@ -60,8 +59,7 @@ ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
 TARGET               = pingpong \
-simple_public simple_private simple_publish \
-dff2_bb_pipeline dff2_bb_farm dff2_bb_ofarm
+simple_public simple_private simple_publish
 
 .PHONY: all clean distclean
 .SUFFIXES: .cpp .o
@@ -77,27 +75,18 @@ pingpong: pingpong.o
 simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
-dff2_bb_pipeline: dff2_bb_pipeline.o
-dff2_bb_farm: dff2_bb_farm.o
-dff2_bb_ofarm: dff2_bb_ofarm.o
 
 test: all
 	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/pingpong
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_public
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_private
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
-	$(GAM_CMD) $(VERBOSE) -n 4 -f $(GAM_CONF) $(PWD)/dff2_bb_pipeline
-	$(GAM_CMD) $(VERBOSE) -n 6 -f $(GAM_CONF) $(PWD)/dff2_bb_farm
-	$(GAM_CMD) $(VERBOSE) -n 6 -f $(GAM_CONF) $(PWD)/dff2_bb_ofarm
 
 test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_public
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_private
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
-	$(GAM_CMD_LOCAL) $(VERBOSE) -n 4 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_pipeline
-	$(GAM_CMD_LOCAL) $(VERBOSE) -n 6 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_farm
-	$(GAM_CMD_LOCAL) $(VERBOSE) -n 6 -l $(GAM_LOCALHOST) $(PWD)/dff2_bb_ofarm
 	
 kill:
 	killall $(TARGET)
