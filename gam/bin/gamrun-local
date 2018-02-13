@@ -102,7 +102,7 @@ for e in range(args.cardinality):
     
     # execute
     if(args.verbose):
-        print "> node = " + str(e)
+        print "> starting node = " + str(e)
     p = Popen(CMD, env=my_env, stdout=out_file, stderr=err_file)
 
     inflight.append(p)
@@ -118,5 +118,9 @@ while len(inflight) > 0:
         if(ret != 0):
             print "ERROR: executor {0} returned {1}".format(exec_map[p], ret)
             killall()
+        else:
+            if(args.verbose):
+                print "> completed node = " + str(exec_map[p])
+ 
     else:
         inflight.append(p)

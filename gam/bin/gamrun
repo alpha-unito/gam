@@ -114,7 +114,7 @@ for e in range(args.cardinality):
     # execute via ssh
     HOST = hostnames[e % len(hostnames)]
     if(args.verbose):
-        print "> host = " + HOST
+        print "> starting node = " + str(e) + " @ " + HOST
         print CMD
     
     p, _out = ssh_execute(HOST, args.port, CMD)
@@ -135,5 +135,9 @@ while len(inflight) > 0:
         if(ret != 0):
             print "ERROR: executor {0} returned {1}".format(exec_map[p], ret)
             killall()
+        
+        else:
+            if(args.verbose):
+                print "> completed node = " + str(exec_map[p])
     else:
         inflight.append(p)
