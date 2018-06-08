@@ -70,14 +70,14 @@ namespace gam {
  * Namely, it ranges from 1 to the number of executors.
  *
  */
-executor_id rank()
+static inline executor_id rank()
 {
-    return ctx.rank();
+    return ctx().rank();
 }
 
-executor_id cardinality()
+static inline executor_id cardinality()
 {
-    return ctx.cardinality();
+    return ctx().cardinality();
 }
 
 } /* namespace gam */

@@ -50,7 +50,7 @@ VERBOSE              = -v
 CXX 		             ?= g++
 LINK_OPT             = 
 VERSION              = 
-OPTIMIZE_FLAGS       = -O0 -g3
+OPTIMIZE_FLAGS       = -O3 -g0
 CXXFLAGS             =  -std=c++11 -Wall -DGAM_LOG -DGAM_DBG
 LDFLAGS              = 
 INCS                 = -I$(GAM_INCS) `pkg-config --cflags libfabric`
@@ -58,7 +58,7 @@ LIBS                 = -lpthread `pkg-config --libs libfabric`
 ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
-TARGET               = pingpong \
+TARGET               = pingpong mtu \
 simple_public simple_private simple_publish
 
 .PHONY: all clean distclean
@@ -76,17 +76,22 @@ simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
 
+mtu: mtu_main.o mtu_ranks.o
+	$(CXX) $^ -o $@ $(LDFLAGS) $(LIBS)
+
 test: all
 	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/pingpong
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_public
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_private
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
+	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/mtu
 
 test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_public
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_private
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/mtu
 	
 kill:
 	killall $(TARGET)

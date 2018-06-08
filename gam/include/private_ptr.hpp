@@ -88,7 +88,7 @@ public:
             LOGLN_OS("PVT constructor unique=" << lp);
 
             /* lookup parent global pointer */
-            if (!ctx.has_parent(lp))
+            if (!ctx().has_parent(lp))
                 //not a private child
                 make(lp, lup.get_deleter());
             else
@@ -183,9 +183,9 @@ internal_gp            (other.internal_gp)
             gam_unique_ptr<T> local()
             {
                 USRASSERT(internal_gp.is_address());
-                USRASSERT(ctx.am_owner(internal_gp));
+                USRASSERT(ctx().am_owner(internal_gp));
 
-                T *lp = ctx.local_private<T>(internal_gp);
+                T *lp = ctx().local_private<T>(internal_gp);
 
                 /* neutralize parent destruction */
                 release();
@@ -193,8 +193,8 @@ internal_gp            (other.internal_gp)
                 /* prepare child deleter */
                 auto deleter = [](T *lp)
                 {
-                    DBGASSERT(ctx.has_parent(lp));
-                    ctx.unmap(ctx.parent(lp));
+                    DBGASSERT(ctx().has_parent(lp));
+                    ctx().unmap(ctx().parent(lp));
                 };
 
                 return gam_unique_ptr<T>(lp, deleter);
@@ -207,20 +207,20 @@ internal_gp            (other.internal_gp)
              */
             void push(executor_id to)
             {
-                USRASSERT(to != ctx.rank() && to < ctx.cardinality());
+                USRASSERT(to != ctx().rank() && to < ctx().cardinality());
 
                 if (internal_gp.is_address())
                 {
                     //pointer brings a global address
-                    USRASSERT(ctx.am_owner(internal_gp));
-                    ctx.push_private(internal_gp, to);
+                    USRASSERT(ctx().am_owner(internal_gp));
+                    ctx().push_private(internal_gp, to);
                     release();
                 }
 
                 else
                 {
                     //pointer brings a reserved value
-                    ctx.push_reserved(internal_gp, to);
+                    ctx().push_reserved(internal_gp, to);
                 }
             }
 
@@ -240,10 +240,10 @@ internal_gp            (other.internal_gp)
             {
                 LOGLN_OS("PVT reset=" << *this);
 
-                if (ctx.author(internal_gp) == ctx.rank())
-                ctx.unmap(internal_gp);
+                if (ctx().author(internal_gp) == ctx().rank())
+                ctx().unmap(internal_gp);
                 else
-                ctx.forward_reset(internal_gp, ctx.author(internal_gp));
+                ctx().forward_reset(internal_gp, ctx().author(internal_gp));
 
                 release();
             }
@@ -309,7 +309,7 @@ internal_gp            (other.internal_gp)
             template<typename Deleter>
             void make(T *lp, Deleter d) //todo noexcept
             {
-                internal_gp = ctx.mmap_private(*lp, d);
+                internal_gp = ctx().mmap_private(*lp, d);
                 DBGASSERT(internal_gp.is_address());
             }
 
@@ -320,10 +320,10 @@ internal_gp            (other.internal_gp)
 
                 _Tp *lp = child.get();
 
-                USRASSERT(ctx.has_parent(lp));
-                USRASSERT(ctx.am_owner(ctx.parent(lp)));
+                USRASSERT(ctx().has_parent(lp));
+                USRASSERT(ctx().am_owner(ctx().parent(lp)));
 
-                internal_gp = ctx.parent(lp);
+                internal_gp = ctx().parent(lp);
             }
         };
 
@@ -344,8 +344,8 @@ private_ptr<_Tp> make_private(_Args&&... __args)
 template<typename T>
 private_ptr<T> pull_private(executor_id from)
 {
-    USRASSERT(from != ctx.rank() && from < ctx.cardinality());
-    return private_ptr<T>(ctx.pull_private(from));
+    USRASSERT(from != ctx().rank() && from < ctx().cardinality());
+    return private_ptr<T>(ctx().pull_private(from));
 }
 
 /**
@@ -356,7 +356,7 @@ private_ptr<T> pull_private(executor_id from)
 template<typename T>
 private_ptr<T> pull_private() noexcept
 {
-    return private_ptr<T>(ctx.pull_private());
+    return private_ptr<T>(ctx().pull_private());
 }
 
 } /* namespace gam */

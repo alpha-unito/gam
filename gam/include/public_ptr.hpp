@@ -107,7 +107,7 @@ public:
         LOGLN_OS("PUB copy-constructor global=" << internal_gp);
 
         if (internal_gp.is_address())
-            ctx.rc_inc(internal_gp);
+            ctx().rc_inc(internal_gp);
     }
 
     public_ptr &operator=(const public_ptr &copy) noexcept
@@ -117,9 +117,9 @@ public:
         if (internal_gp.address() != copy.internal_gp.address())
         {
             if (copy.internal_gp.is_address())
-                ctx.rc_inc(copy.internal_gp);
+                ctx().rc_inc(copy.internal_gp);
             if (internal_gp.is_address())
-                ctx.rc_dec(internal_gp);
+                ctx().rc_dec(internal_gp);
             internal_gp = copy.internal_gp;
         }
         return *this;
@@ -176,11 +176,11 @@ public:
             LOGLN_OS("PUB from-PVT constructor from=" << gp);
 
             /* remap to public address */
-            internal_gp = ctx.publish<T>(gp);
+            internal_gp = ctx().publish<T>(gp);
             p.release();
 
             /* init reference counter */
-            ctx.rc_init(internal_gp);
+            ctx().rc_init(internal_gp);
         }
         else
         {
@@ -205,11 +205,11 @@ public:
                 reset();
 
             /* remap to public address */
-            internal_gp = ctx.publish<T>(gp);
+            internal_gp = ctx().publish<T>(gp);
             p.release();
 
             /* init reference counter */
-            ctx.rc_init(internal_gp);
+            ctx().rc_init(internal_gp);
         }
         else
         {
@@ -236,7 +236,7 @@ public:
     std::shared_ptr<T> local()
     {
         USRASSERT(internal_gp.is_address());
-        return ctx.local_public<T>(internal_gp);
+        return ctx().local_public<T>(internal_gp);
     }
 
     /**
@@ -246,16 +246,16 @@ public:
      */
     void push(executor_id to) const
     {
-        USRASSERT(to != ctx.rank() && to < ctx.cardinality());
+        USRASSERT(to != ctx().rank() && to < ctx().cardinality());
         if (internal_gp.is_address())
         {
             //pointer brings a global address
-            ctx.push_public(internal_gp, to);
-            ctx.rc_inc(internal_gp);
+            ctx().push_public(internal_gp, to);
+            ctx().rc_inc(internal_gp);
         }
         else
             //pointer brings a reserved value
-            ctx.push_reserved(internal_gp, to);
+            ctx().push_reserved(internal_gp, to);
     }
 
     /*
@@ -267,7 +267,7 @@ public:
      */
     void reset() noexcept
     {
-        ctx.rc_dec(internal_gp);
+        ctx().rc_dec(internal_gp);
         internal_gp.address(0);
     }
 
@@ -332,11 +332,11 @@ private:
     template<typename Deleter>
     void make(T *lp, Deleter d)
     {
-        internal_gp = ctx.mmap_public(*lp, d);
+        internal_gp = ctx().mmap_public(*lp, d);
         DBGASSERT(internal_gp.is_address());
 
         /* init reference counter */
-        ctx.rc_init(internal_gp);
+        ctx().rc_init(internal_gp);
     }
 };
 
@@ -357,8 +357,8 @@ public_ptr<_Tp> make_public(_Args&&... __args)
 template<typename T>
 public_ptr<T> pull_public(executor_id from)
 {
-    USRASSERT(from != ctx.rank() && from < ctx.cardinality());
-    return public_ptr<T>(ctx.pull_public(from));
+    USRASSERT(from != ctx().rank() && from < ctx().cardinality());
+    return public_ptr<T>(ctx().pull_public(from));
 }
 
 /**
@@ -369,7 +369,7 @@ public_ptr<T> pull_public(executor_id from)
 template<typename T>
 public_ptr<T> pull_public() noexcept
 {
-    return public_ptr<T>(ctx.pull_public());
+    return public_ptr<T>(ctx().pull_public());
 }
 
 } /* namespace gam */

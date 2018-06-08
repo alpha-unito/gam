@@ -45,12 +45,12 @@ static struct fid_fabric *fl_fabric_;
 static struct fid_domain *fl_domain_;
 static const char *fl_node_;
 
-void fl_node(const char *n)
+static void fl_node(const char *n)
 {
     fl_node_ = n;
 }
 
-void fl_getinfo(fi_info **fi, //
+static void fl_getinfo(fi_info **fi, //
         const char *node, const char *service, //
         uint64_t flags, enum fi_ep_type ep_type, uint64_t caps)
 {
@@ -102,7 +102,7 @@ void fl_getinfo(fi_info **fi, //
 #endif
 }
 
-void fl_init(fi_info *fi)
+static void fl_init(fi_info *fi)
 {
     int ret = 0;
 
@@ -115,7 +115,7 @@ void fl_init(fi_info *fi)
     DBGASSERT(!ret);
 }
 
-void fl_fini()
+static void fl_fini()
 {
     int ret = 0;
 
@@ -131,7 +131,7 @@ void fl_fini()
  *
  ***************************************************************************
  */
-ssize_t fl_post_rx(fid_ep *ep, void *rxbuf, size_t size, fi_addr_t from)
+static ssize_t fl_post_rx(fid_ep *ep, void *rxbuf, size_t size, fi_addr_t from)
 {
     int ret;
     while (1)
@@ -145,7 +145,7 @@ ssize_t fl_post_rx(fid_ep *ep, void *rxbuf, size_t size, fi_addr_t from)
     return 0;
 }
 
-ssize_t fl_post_tx(fid_ep *ep, const void *txbuf, size_t size, fi_addr_t to)
+static ssize_t fl_post_tx(fid_ep *ep, const void *txbuf, size_t size, fi_addr_t to)
 {
     int ret;
     while (1)
@@ -167,7 +167,7 @@ ssize_t fl_post_tx(fid_ep *ep, const void *txbuf, size_t size, fi_addr_t to)
  ***************************************************************************
  */
 //spin-wait some completions on a completion queue
-int fl_spin_for_comp(struct fid_cq *cq)
+static int fl_spin_for_comp(struct fid_cq *cq)
 {
     struct fi_cq_err_entry comp;
     int ret;
@@ -184,7 +184,7 @@ int fl_spin_for_comp(struct fid_cq *cq)
     return 0;
 }
 
-ssize_t fl_tx(fid_ep *ep, fid_cq *txcq, const void *tx_buf, size_t size, //
+static ssize_t fl_tx(fid_ep *ep, fid_cq *txcq, const void *tx_buf, size_t size, //
         fi_addr_t to)
 {
     ssize_t ret = 0;

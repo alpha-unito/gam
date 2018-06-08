@@ -82,7 +82,7 @@ using Links = links_stub<links_impl<T>, T>;
 /*
  * forward declarations for local memory allocation
  */
-inline void FREE(void *ptr);
+static inline void FREE(void *ptr);
 
 template<typename T>
 inline void TYPED_FREE(T *ptr);
@@ -1009,37 +1009,58 @@ private:
     }
 };
 
-static Context ctx;
+#if __cplusplus >= 201703L
+class Context_ {
+public:
+	Context *ctx() {
+		return &ctx_;
+	}
+private:
+	static inline Context ctx_
+};
+#else
+class Context_ {
+public:
+	static Context *ctx() {
+		static Context ctx_;
+		return &ctx_;
+	}
+};
+#endif
+
+static inline Context &ctx() {
+	return *Context_::ctx();
+}
 
 /*
  * shortcuts
  */
-inline void *MALLOC(size_t size)
+static inline void *MALLOC(size_t size)
 {
-    return ctx.local_malloc(size);
+    return ctx().local_malloc(size);
 }
 
-inline void FREE(void *ptr)
+static inline void FREE(void *ptr)
 {
-    ctx.local_free(ptr);
+	ctx().local_free(ptr);
 }
 
 template<typename T>
 inline void TYPED_FREE(T *ptr)
 {
-    ctx.local_typed_free(ptr);
+	ctx().local_typed_free(ptr);
 }
 
 template<typename obj_t, typename ... Params>
 inline obj_t *NEW(Params ... p)
 {
-    return ctx.local_new<obj_t>(p...);
+    return ctx().local_new<obj_t>(p...);
 }
 
 template<typename T>
 inline void DELETE(T *ptr)
 {
-    return ctx.local_delete(ptr);
+    return ctx().local_delete(ptr);
 }
 
 } /* namespace gam */
