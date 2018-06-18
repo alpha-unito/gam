@@ -698,7 +698,6 @@ private:
         {
             RLOAD, RC_INC, RC_DEC, PVT_RESET, DMN_END
         } op;
-        size_t size; //remote-load size
         executor_id from;
         GlobalPointer p;
     };
@@ -807,8 +806,8 @@ private:
                     ;
                     DBGASSERT(ctx.view.committed(a) != nullptr)
                     ;
-                    ctx.remote_links->raw_send(ctx.view.committed(a)->get(), //
-                            p.size, p.from);
+                    for(auto &me : ctx.view.committed(a)->marshall())
+                    	ctx.remote_links->raw_send(me.base, me.size, p.from);
                     break;
                 case daemon_pointer::DMN_END:
                     LOGLN("DMN recv RC_END from %lu", p.from);
@@ -916,12 +915,29 @@ private:
         return res;
     }
 
+    /*
+     * the following three functions
+     * copy the local memory region at global address ga to
+     * another memory region pointed by a local pointer,
+     * with the semantic of the copy depending on the
+     * data-type being trivially copyable.
+     */
     template<typename T>
-    inline void local_load(T *lp, uint64_t a)
+	inline void local_load_(T *lp, uint64_t ga, std::true_type) {
+		std::memcpy(lp, view.committed(ga)->get(), sizeof(T));
+	}
+
+    template<typename T>
+	inline void local_load_(T *lp, uint64_t ga, std::false_type) {
+		*lp = *dynamic_cast<T *>(view.committed(ga)->get());
+	}
+
+    template<typename T>
+    inline void local_load(T *lp, uint64_t ga)
     {
-        LOGLN("CTX load %p size=%zu %llu", lp, sizeof(T), a);
-        DBGASSERT(view.committed(a) != nullptr);
-        memcpy(lp, view.committed(a)->get(), sizeof(T));
+        LOGLN("CTX load %p %llu", lp, ga);
+        DBGASSERT(view.committed(ga) != nullptr);
+        local_load_(lp, ga, std::is_trivially_copyable<T>{});
     }
 
     /*
@@ -953,7 +969,7 @@ private:
         view.bind_child(a, child);
 
         /* issue remote load */
-        forward_load(child, p);
+        forward_load(bp->typed_get(), p);
 
         /* take ownership */
         view.bind_committed(a, bp);
@@ -962,24 +978,43 @@ private:
         return bp->typed_get();
     }
 
+	/*
+	 * the following three functions
+	 * copies the remote data content of the memory pointed by
+	 * the global pointer gp into the local memory pointed by
+	 * the local pointer lp,
+	 * with the semantic of the copy depending on the
+	 * data-type being trivially copyable.
+	 */
     template<typename T>
+    void recv_rload_rep(T *lp, executor_id from, std::true_type) {
+    	local_links->raw_recv(lp, sizeof(T), from);
+    }
+
+    template<typename T>
+	void recv_rload_rep(T *lp, executor_id from, std::false_type) {
+    	lp->ingest([&] (void *dst, size_t size) {
+    			       local_links->raw_recv(dst, size, from);
+    	           });
+	}
+
+    template <typename T>
     void forward_load(T *lp, const GlobalPointer &p)
     {
         DBGASSERT(p.is_address());
         uint64_t a = p.address();
         executor_id to = view.author(a);
-        LOGLN("CTX fwd LOAD size=%zu %llu dest=%lu", sizeof(T), a, to);
+        LOGLN("CTX fwd LOAD %llu dest=%lu", a, to);
 
         /* send remote-load request */
         daemon_pointer dp;
         dp.op = daemon_pointer::RLOAD;
         dp.p = p;
-        dp.size = sizeof(T);
         dp.from = rank_;
         local_links->send(dp, to);
 
         /* receive remote-load reply */
-        local_links->raw_recv(lp, sizeof(T), to);
+        recv_rload_rep(lp, to, std::is_trivially_copyable<T>{});
     }
 
     inline void forward_inc(const GlobalPointer &p)

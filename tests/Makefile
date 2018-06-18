@@ -58,7 +58,7 @@ LIBS                 = -lpthread `pkg-config --libs libfabric`
 ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
-TARGET               = pingpong mtu \
+TARGET               = pingpong mtu non_trivially_copyable \
 simple_public simple_private simple_publish
 
 .PHONY: all clean distclean
@@ -72,6 +72,7 @@ simple_public simple_private simple_publish
 all: $(TARGET)
 
 pingpong: pingpong.o
+non_trivially_copyable: non_trivially_copyable.o
 simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o

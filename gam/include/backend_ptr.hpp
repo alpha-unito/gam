@@ -42,11 +42,14 @@ public:
     }
 
     virtual void *get() const = 0;
+    virtual marshalled_t marshall() const = 0;
 };
 
 template<typename T, typename Deleter>
 class backend_typed_ptr: public backend_ptr {
 public:
+	typedef T data_t;
+
     backend_typed_ptr(T *ptr, Deleter d)
             : ptr(ptr), d(d)
     {
@@ -65,6 +68,33 @@ public:
     T *typed_get() const
     {
         return ptr;
+    }
+
+    marshalled_t marshall_(std::true_type) const {
+    	return marshalled_t(1, {ptr, sizeof(T)});
+    }
+
+    marshalled_t marshall_(std::false_type) const {
+		return ptr->marshall();
+	}
+
+    marshalled_t marshall() const {
+    	return marshall_(std::is_trivially_copyable<T>{});
+    }
+
+    template<typename Ingestor>
+	void ingest_(Ingestor &&f, std::false_type) const {
+		*ptr = new (ptr) T(f);
+	}
+
+    template<typename Ingestor>
+	void ingest_(Ingestor &&f, std::true_type) const {
+    	f(ptr, sizeof(T));
+	}
+
+    template<typename Ingestor>
+    void ingest(Ingestor &&f) const {
+    	ingest_(f, std::is_trivially_copyable<T>{});
     }
 
 private:
