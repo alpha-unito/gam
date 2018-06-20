@@ -87,11 +87,17 @@ static inline void FREE(void *ptr);
 template<typename T>
 inline void TYPED_FREE(T *ptr);
 
+template<typename T>
+inline void DELETE(T *ptr);
+
 /**
  * Context represents the executor state.
  */
 class Context
 {
+	template<typename T>
+	using bp_t = backend_typed_ptr<T, void(*)(T*)>;
+
 public:
     Context()
             : cache(local_allocator)
@@ -947,6 +953,24 @@ private:
      *
      * @retval a raw pointer to the local memory for p
      */
+	template<typename T>
+	bp_t<T> *withdraw_(const GlobalPointer &p, std::true_type) {
+		/* allocate backend memory */
+		T* tmp = (T*) local_malloc(sizeof(T));
+		auto bp = local_new<bp_t<T>>(tmp, TYPED_FREE<T>);
+
+		/* issue remote load */
+		forward_load(bp->typed_get(), p);
+
+		return bp;
+	}
+
+    template<typename T>
+	bp_t<T> *withdraw_(const GlobalPointer &p, std::false_type) {
+		/* allocate backend memory */
+		return forward_make<T>(p);
+	}
+
     template<typename T>
     inline T *withdraw(const GlobalPointer &p)
     {
@@ -956,20 +980,14 @@ private:
         DBGASSERT(view.access_level(a) == AL_PRIVATE);
         DBGASSERT(!am_author(p));
         DBGASSERT(am_owner(p));
-
-        /* allocate backend memory */
         DBGASSERT(view.committed(a) == nullptr);
-        T* tmp = (T*) local_malloc(sizeof(T));
-        using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-        bp_t *bp = local_new<bp_t>(tmp, TYPED_FREE<T>);
+
+        auto bp = withdraw_<T>(p, std::is_trivially_copyable<T>{});
 
         /* bind parenthood */
         T *child = bp->typed_get();
         view.bind_parent(child, a);
         view.bind_child(a, child);
-
-        /* issue remote load */
-        forward_load(bp->typed_get(), p);
 
         /* take ownership */
         view.bind_committed(a, bp);
@@ -979,42 +997,48 @@ private:
     }
 
 	/*
-	 * the following three functions
+	 * the following functions
 	 * copies the remote data content of the memory pointed by
 	 * the global pointer gp into the local memory pointed by
 	 * the local pointer lp,
 	 * with the semantic of the copy depending on the
 	 * data-type being trivially copyable.
 	 */
-    template<typename T>
-    void recv_rload_rep(T *lp, executor_id from, std::true_type) {
-    	local_links->raw_recv(lp, sizeof(T), from);
-    }
+	executor_id prepare_forward(const GlobalPointer &p) {
+		DBGASSERT(p.is_address());
+		uint64_t a = p.address();
+		executor_id to = view.author(a);
+		LOGLN("CTX fwd LOAD %llu dest=%lu", a, to);
 
-    template<typename T>
-	void recv_rload_rep(T *lp, executor_id from, std::false_type) {
-    	lp->ingest([&] (void *dst, size_t size) {
-    			       local_links->raw_recv(dst, size, from);
-    	           });
+		/* send remote-load request */
+		daemon_pointer dp;
+		dp.op = daemon_pointer::RLOAD;
+		dp.p = p;
+		dp.from = rank_;
+		local_links->send(dp, to);
+
+		return to;
 	}
 
     template <typename T>
     void forward_load(T *lp, const GlobalPointer &p)
     {
-        DBGASSERT(p.is_address());
-        uint64_t a = p.address();
-        executor_id to = view.author(a);
-        LOGLN("CTX fwd LOAD %llu dest=%lu", a, to);
-
-        /* send remote-load request */
-        daemon_pointer dp;
-        dp.op = daemon_pointer::RLOAD;
-        dp.p = p;
-        dp.from = rank_;
-        local_links->send(dp, to);
+    	auto to = prepare_forward(p);
 
         /* receive remote-load reply */
-        recv_rload_rep(lp, to, std::is_trivially_copyable<T>{});
+        local_links->raw_recv(lp, sizeof(T), to);
+    }
+
+    template <typename T>
+    bp_t<T> *forward_make(const GlobalPointer &p) {
+		auto to = prepare_forward(p);
+
+    	auto ingest_f = [&] (void *dst, size_t size) {
+		       local_links->raw_recv(dst, size, to);
+        };
+    	auto bp = local_new<bp_t<T>>(local_new<T>(ingest_f), DELETE<T>);
+
+    	return bp;
     }
 
     inline void forward_inc(const GlobalPointer &p)
