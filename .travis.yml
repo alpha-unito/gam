@@ -58,6 +58,7 @@ before_install:
   - make
   - make install
   - export PKG_CONFIG_PATH=$HOME/lib/pkgconfig
+  - cd ..
 
 script:
   - cd tests
