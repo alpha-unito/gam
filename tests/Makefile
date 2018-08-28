@@ -58,7 +58,7 @@ LIBS                 = -lpthread `pkg-config --libs libfabric`
 ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
-TARGET               = pingpong mtu non_trivially_copyable \
+TARGET               = pingpong mtu \
 simple_public simple_private simple_publish
 
 .PHONY: all clean distclean
@@ -72,7 +72,6 @@ simple_public simple_private simple_publish
 all: $(TARGET)
 
 pingpong: pingpong.o
-non_trivially_copyable: non_trivially_copyable.o
 simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
@@ -82,7 +81,6 @@ mtu: mtu_main.o mtu_ranks.o
 
 test: all
 	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/pingpong
-	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/non_trivially_copyable
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_public
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_private
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
@@ -90,7 +88,6 @@ test: all
 
 test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
-	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/non_trivially_copyable
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_public
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_private
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
