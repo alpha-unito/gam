@@ -5,10 +5,6 @@ matrix:
     - os: osx
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
-      addons:
-        apt:
-          packages:
-            - libfabric-dev
     
     - os: linux
       addons:
@@ -17,7 +13,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
-            - libfabric-dev
       env:
         - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
     
@@ -28,7 +23,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
-            - libfabric-dev
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
     
@@ -39,7 +33,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
-            - libfabric-dev
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     
@@ -52,13 +45,19 @@ matrix:
           packages:
             - g++-7
             - clang-5.0
-            - libfabric-dev
                   
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
 before_install:
   - eval "${MATRIX_EVAL}"
+  - git clone https://github.com/ofiwg/libfabric.git
+  - cd libfabric
+  - ./autogen.sh
+  - ./configure --prefix=$HOME
+  - make
+  - make install
+  - export PKG_CONFIG_PATH=$HOME/lib/pkgconfig
 
 script:
   - cd tests
