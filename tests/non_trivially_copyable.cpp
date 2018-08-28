@@ -94,9 +94,6 @@ void r0() {
   }
   std::vector<int> ref(10, 42);
   assert(*lp->get() == ref);
-
-  /* create a private pointer */
-  auto q = gam::make_public<gam_indirect_vector<int>>(10, 42);
 }
 
 /*
