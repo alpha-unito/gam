@@ -87,6 +87,9 @@ static inline void FREE(void *ptr);
 template<typename T>
 inline void TYPED_FREE(T *ptr);
 
+template<typename T>
+inline void DELETE(T *ptr);
+
 /**
  * Context represents the executor state.
  */
@@ -414,7 +417,7 @@ public:
         DBGASSERT(view.access_level(a) == AL_PUBLIC);
 
         /* allocate local memory */
-        T *lp = (T *) local_malloc(sizeof(T));
+        T *lp = (T *) local_new<T>();
 
         /* load either locally or remotely */
         if (view.author(a) == rank_)
@@ -427,7 +430,7 @@ public:
 
         /* generate a smart pointer with custom deleter to match allocation */
         return std::shared_ptr<T>((T*) lp, [](T *p_)
-        {   FREE((void *)p_);});
+        {   DELETE(p_);});
     }
 
     /*
@@ -921,7 +924,7 @@ private:
     {
         LOGLN("CTX load %p size=%zu %llu", lp, sizeof(T), a);
         DBGASSERT(view.committed(a) != nullptr);
-        memcpy(lp, view.committed(a)->get(), sizeof(T));
+        *lp = *reinterpret_cast<T *>(view.committed(a)->get());
     }
 
     /*
