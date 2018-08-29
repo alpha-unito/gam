@@ -18,15 +18,6 @@
  ****************************************************************************
  */
 
-/**
-<<<<<<< HEAD
- *
- * @file        non_trivially_copyable.cpp
- * @brief       2-executor pingpong with non-trivially-copyable types
- * @author      Maurizio Drocco
- *
- */
-
 #include <cassert>
 #include <iostream>
 
