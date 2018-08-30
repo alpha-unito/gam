@@ -34,6 +34,7 @@
 
 #include "utils.hpp"
 #include "wrapped_allocator.hpp"
+#include "backend_ptr.hpp"
 
 namespace gam
 {
@@ -50,29 +51,32 @@ public:
     void finalize()
     {
         for (auto it : cache_map)
-            wa.free(const_cast<void *>(it.second));
+            wa.delete_(it.second);
         cache_map.clear();
     }
 
     template<typename T>
     void store(uint64_t a, T *p)
     {
+    	using bp_t = backend_typed_ptr<T, void(*)(T *)>;
+
         if (!available())
             make_room();
         DBGASSERT(cache_map.find(a) == cache_map.end());
-        void *slot = wa.malloc(sizeof(T));
-        memcpy(slot, p, sizeof(T));
-        cache_map[a] = slot;
-        LOGLN_OS("CTX cache store a=" << a << " p=" << slot);
+        auto lp = new T();
+        cache_map[a] = wa.new_<bp_t>(lp, [](T *p){delete p;});
+        *lp = *p;
+        LOGLN_OS("CTX cache store a=" << a << " p=" << lp);
     }
 
     template<typename T>
     bool load(T *dst, uint64_t a)
     {
-        if (cache_map.find(a) != cache_map.end())
+    	auto it = cache_map.find(a);
+        if (it != cache_map.end())
         {
             LOGLN_OS("CTX cache hit a=" << a);
-            memcpy((void *) dst, cache_map[a], sizeof(T));
+            *dst = *static_cast<T *>(it->second->get());
             return true;
         }
         LOGLN_OS("CTX cache miss a=" << a);
@@ -80,7 +84,7 @@ public:
     }
 
 private:
-    std::unordered_map<uint64_t, const void *> cache_map;
+    std::unordered_map<uint64_t, backend_ptr *> cache_map;
     wrapped_allocator &wa;
 
     //todo fixed capacity or whatever
