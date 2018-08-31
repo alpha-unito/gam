@@ -82,10 +82,6 @@ using Links = links_stub<links_impl<T>, T>;
 /*
  * forward declarations for local memory allocation
  */
-static inline void FREE(void *ptr);
-
-template<typename T>
-inline void TYPED_FREE(T *ptr);
 
 template<typename T>
 inline void DELETE(T *ptr);
@@ -498,9 +494,9 @@ public:
             DBGASSERT(!view.has_child(a));
 
             /* allocate backend memory */
-            T* tmp = (T*) local_malloc(sizeof(T));
+            T* tmp = (T*) local_new<T>();
             using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-            auto tbp_ = local_new<bp_t>(tmp, TYPED_FREE<T>);
+            auto tbp_ = local_new<bp_t>(tmp, DELETE<T>);
 
             /* remote load */
             forward_load(tbp_->typed_get(), p);
@@ -640,16 +636,6 @@ public:
      *
      ***************************************************************************
      */
-    void *local_malloc(size_t size)
-    {
-        return local_allocator.malloc(size);
-    }
-
-    void local_free(void *ptr)
-    {
-        local_allocator.free(ptr);
-    }
-
     template<typename T>
     void local_typed_free(T *ptr)
     {
@@ -946,9 +932,9 @@ private:
 
         /* allocate backend memory */
         DBGASSERT(view.committed(a) == nullptr);
-        T* tmp = (T*) local_malloc(sizeof(T));
+        T* tmp = (T*) local_new<T>();
         using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-        bp_t *bp = local_new<bp_t>(tmp, TYPED_FREE<T>);
+        bp_t *bp = local_new<bp_t>(tmp, DELETE<T>);
 
         /* bind parenthood */
         T *child = bp->typed_get();
@@ -1038,22 +1024,6 @@ static inline Context &ctx() {
 /*
  * shortcuts
  */
-static inline void *MALLOC(size_t size)
-{
-    return ctx().local_malloc(size);
-}
-
-static inline void FREE(void *ptr)
-{
-	ctx().local_free(ptr);
-}
-
-template<typename T>
-inline void TYPED_FREE(T *ptr)
-{
-	ctx().local_typed_free(ptr);
-}
-
 template<typename obj_t, typename ... Params>
 inline obj_t *NEW(Params ... p)
 {
