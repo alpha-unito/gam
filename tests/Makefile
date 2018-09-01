@@ -86,7 +86,7 @@ test: all
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_private
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/mtu
-	$(GAM_CMD) $(VERBOSE) -n 1 -f $(GAM_CONF) $(PWD)/non_trivially_copyable
+	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/non_trivially_copyable
 
 test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
@@ -94,7 +94,7 @@ test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_private
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/mtu
-	$(GAM_CMD_LOCAL) $(VERBOSE) -n 1 -l $(GAM_LOCALHOST) $(PWD)/non_trivially_copyable
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/non_trivially_copyable
 	
 kill:
 	killall $(TARGET)

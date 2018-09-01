@@ -796,8 +796,8 @@ private:
                     ;
                     DBGASSERT(ctx.view.committed(a) != nullptr)
                     ;
-                    ctx.remote_links->raw_send(ctx.view.committed(a)->get(), //
-                            p.size, p.from);
+                    for (auto &me : ctx.view.committed(a)->marshall())
+                      ctx.remote_links->raw_send(me.base, me.size, p.from);
                     break;
                 case daemon_pointer::DMN_END:
                     LOGLN("DMN recv RC_END from %lu", p.from);
@@ -951,6 +951,18 @@ private:
         return bp->typed_get();
     }
 
+    template <typename T>
+    void recv_kernel(T *lp, executor_id to, std::true_type) {
+      local_links->raw_recv(lp, sizeof(T), to);
+    }
+
+    template <typename T>
+    void recv_kernel(T *lp, executor_id to, std::false_type) {
+      lp->ingest([&](void *dst, size_t size) {
+        local_links->raw_recv(dst, size, to);
+      });
+    }
+
     template<typename T>
     void forward_load(T *lp, const GlobalPointer &p)
     {
@@ -967,8 +979,7 @@ private:
         dp.from = rank_;
         local_links->send(dp, to);
 
-        /* receive remote-load reply */
-        local_links->raw_recv(lp, sizeof(T), to);
+        recv_kernel(lp, to, std::is_trivially_copyable<T>{});
     }
 
     inline void forward_inc(const GlobalPointer &p)
