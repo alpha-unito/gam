@@ -59,7 +59,7 @@ ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
 TARGET               = pingpong mtu \
-simple_public simple_private simple_publish non_trivially_copyable
+simple_public simple_private simple_publish non_trivially_copyable non_trivially_copyable_pingpong
 
 .PHONY: all clean distclean
 .SUFFIXES: .cpp .o
@@ -76,6 +76,7 @@ simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
 non_trivially_copyable: non_trivially_copyable.o
+non_trivially_copyable_pingpong: non_trivially_copyable_pingpong.o
 
 mtu: mtu_main.o mtu_ranks.o
 	$(CXX) $^ -o $@ $(LDFLAGS) $(LIBS)
@@ -87,6 +88,7 @@ test: all
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/simple_publish
 	$(GAM_CMD) $(VERBOSE) -n 3 -f $(GAM_CONF) $(PWD)/mtu
 	$(GAM_CMD) $(VERBOSE) -n 1 -f $(GAM_CONF) $(PWD)/non_trivially_copyable
+	$(GAM_CMD) $(VERBOSE) -n 2 -f $(GAM_CONF) $(PWD)/non_trivially_copyable_pingpong
 
 test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/pingpong
@@ -95,6 +97,7 @@ test-local: all
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/simple_publish
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 3 -l $(GAM_LOCALHOST) $(PWD)/mtu
 	$(GAM_CMD_LOCAL) $(VERBOSE) -n 1 -l $(GAM_LOCALHOST) $(PWD)/non_trivially_copyable
+	$(GAM_CMD_LOCAL) $(VERBOSE) -n 2 -l $(GAM_LOCALHOST) $(PWD)/non_trivially_copyable_pingpong
 	
 kill:
 	killall $(TARGET)
