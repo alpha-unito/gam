@@ -82,10 +82,6 @@ using Links = links_stub<links_impl<T>, T>;
 /*
  * forward declarations for local memory allocation
  */
-static inline void FREE(void *ptr);
-
-template<typename T>
-inline void TYPED_FREE(T *ptr);
 
 template<typename T>
 inline void DELETE(T *ptr);
@@ -498,9 +494,9 @@ public:
             DBGASSERT(!view.has_child(a));
 
             /* allocate backend memory */
-            T* tmp = (T*) local_malloc(sizeof(T));
+            T* tmp = (T*) local_new<T>();
             using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-            auto tbp_ = local_new<bp_t>(tmp, TYPED_FREE<T>);
+            auto tbp_ = local_new<bp_t>(tmp, DELETE<T>);
 
             /* remote load */
             forward_load(tbp_->typed_get(), p);
@@ -640,16 +636,6 @@ public:
      *
      ***************************************************************************
      */
-    void *local_malloc(size_t size)
-    {
-        return local_allocator.malloc(size);
-    }
-
-    void local_free(void *ptr)
-    {
-        local_allocator.free(ptr);
-    }
-
     template<typename T>
     void local_typed_free(T *ptr)
     {
@@ -810,8 +796,8 @@ private:
                     ;
                     DBGASSERT(ctx.view.committed(a) != nullptr)
                     ;
-                    ctx.remote_links->raw_send(ctx.view.committed(a)->get(), //
-                            p.size, p.from);
+                    for (auto &me : ctx.view.committed(a)->marshall())
+                      ctx.remote_links->raw_send(me.base, me.size, p.from);
                     break;
                 case daemon_pointer::DMN_END:
                     LOGLN("DMN recv RC_END from %lu", p.from);
@@ -946,9 +932,9 @@ private:
 
         /* allocate backend memory */
         DBGASSERT(view.committed(a) == nullptr);
-        T* tmp = (T*) local_malloc(sizeof(T));
+        T* tmp = (T*) local_new<T>();
         using bp_t = backend_typed_ptr<T, void(*)(T*)>;
-        bp_t *bp = local_new<bp_t>(tmp, TYPED_FREE<T>);
+        bp_t *bp = local_new<bp_t>(tmp, DELETE<T>);
 
         /* bind parenthood */
         T *child = bp->typed_get();
@@ -963,6 +949,18 @@ private:
         view.bind_author(a, rank_);
 
         return bp->typed_get();
+    }
+
+    template <typename T>
+    void recv_kernel(T *lp, executor_id to, std::true_type) {
+      local_links->raw_recv(lp, sizeof(T), to);
+    }
+
+    template <typename T>
+    void recv_kernel(T *lp, executor_id to, std::false_type) {
+      lp->ingest([&](void *dst, size_t size) {
+        local_links->raw_recv(dst, size, to);
+      });
     }
 
     template<typename T>
@@ -981,8 +979,7 @@ private:
         dp.from = rank_;
         local_links->send(dp, to);
 
-        /* receive remote-load reply */
-        local_links->raw_recv(lp, sizeof(T), to);
+        recv_kernel(lp, to, std::is_trivially_copyable<T>{});
     }
 
     inline void forward_inc(const GlobalPointer &p)
@@ -1038,22 +1035,6 @@ static inline Context &ctx() {
 /*
  * shortcuts
  */
-static inline void *MALLOC(size_t size)
-{
-    return ctx().local_malloc(size);
-}
-
-static inline void FREE(void *ptr)
-{
-	ctx().local_free(ptr);
-}
-
-template<typename T>
-inline void TYPED_FREE(T *ptr)
-{
-	ctx().local_typed_free(ptr);
-}
-
 template<typename obj_t, typename ... Params>
 inline obj_t *NEW(Params ... p)
 {

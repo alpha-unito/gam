@@ -27,6 +27,7 @@
 #ifndef GAM_INCLUDE_BACKEND_PTR_HPP_
 #define GAM_INCLUDE_BACKEND_PTR_HPP_
 
+#include "defs.hpp"
 #include "TrackingAllocator.hpp"
 
 namespace gam {
@@ -42,6 +43,7 @@ public:
     }
 
     virtual void *get() const = 0;
+    virtual marshalled_t marshall() const = 0;
 };
 
 template<typename T, typename Deleter>
@@ -65,6 +67,16 @@ public:
     T *typed_get() const
     {
         return ptr;
+    }
+
+    marshalled_t marshall_(std::true_type) const {
+      return marshalled_t(1, {ptr, sizeof(T)});
+    }
+
+    marshalled_t marshall_(std::false_type) const { return ptr->marshall(); }
+
+    marshalled_t marshall() const {
+      return marshall_(std::is_trivially_copyable<T>{});
     }
 
 private:
