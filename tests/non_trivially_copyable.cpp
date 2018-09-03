@@ -18,19 +18,11 @@
  ****************************************************************************
  */
 
-/**
- * 
- * @file        non_trivially_copyable.cpp
- * @brief       2-executor pingpong with non-trivially-copyable types
- * @author      Maurizio Drocco
- * 
- */
-
-#include <iostream>
 #include <cassert>
+#include <iostream>
 
-#include <gam.hpp>
 #include <TrackingAllocator.hpp>
+#include <gam.hpp>
 
 /*
  *******************************************************************************
@@ -39,32 +31,42 @@
  *
  *******************************************************************************
  */
-template<typename T>
-struct gam_vector : public std::vector<T> {
-	using vsize_t = typename std::vector<T>::size_type;
-	vsize_t size_ = 0;
+/*
+ * The type must be DefaultConstructible and CopyAssignable.
+ * Calling local() on a public pointer results in default construction followed
+ * by copy assignment from (a copy of) the pointed object.
+ */
+template <typename T>
+struct gam_indirect_vector {
+  using vsize_t = typename std::vector<T>::size_type;
+  vsize_t size_ = 0;
 
-	gam_vector() = default;
+  explicit gam_indirect_vector() : vptr(nullptr) {}
 
-	/* ingesting constructor */
-	template<typename StreamInF>
-	gam_vector(StreamInF &&f) {
-		typename std::vector<T>::size_type in_size;
-		f(&in_size, sizeof(vsize_t));
-		this->resize(in_size);
-		assert(this->size() == in_size);
-		f(this->data(), in_size * sizeof(T));
-	}
+  explicit gam_indirect_vector(vsize_t size, const T &v)
+      : vptr(new std::vector<T>(size, v)) {}
 
-	/* marshalling function */
-	gam::marshalled_t marshall() {
-		gam::marshalled_t res;
-		size_ = this->size();
-		res.emplace_back(&size_, sizeof(vsize_t));
-		res.emplace_back(this->data(), size_ * sizeof(T));
-		return res;
-	}
+  gam_indirect_vector &operator=(const gam_indirect_vector &copy) {
+    vptr = new std::vector<T>(*copy.vptr);
+    return *this;
+  }
+
+  ~gam_indirect_vector() {
+    assert(vptr);
+    delete vptr;
+    vptr = nullptr;
+  }
+
+  std::vector<T> *get() { return vptr; }
+
+ private:
+  std::vector<T> *vptr = nullptr;
 };
+
+template <typename T>
+void populate(std::vector<T> &v) {
+  for (typename std::vector<T>::size_type i = 0; i < 100; ++i) v.push_back(i);
+}
 
 /*
  *******************************************************************************
@@ -73,42 +75,16 @@ struct gam_vector : public std::vector<T> {
  *
  *******************************************************************************
  */
-void r0()
-{
-    /* create a private pointer */
-    auto p = gam::make_private<gam_vector<int>>();
-
-    /* populate */
-    auto lp = p.local();
-    lp->push_back(42);
-
-    /* push to 1 */
-    p = gam::private_ptr<gam_vector<int>>(std::move(lp));
-    p.push(1);
-
-    /* wait for the response */
-    p = gam::pull_private<gam_vector<int>>(1);
-
-    /* test */
+void r0() {
+  // check local consistency on public pointer
+  std::shared_ptr<gam_indirect_vector<int>> lp = nullptr;
+  {
+    auto p = gam::make_public<gam_indirect_vector<int>>(10, 42);
     lp = p.local();
-    assert(lp->size() == 2);
-    assert(lp->at(1) == 43);
-}
-
-void r1()
-{
-    /* pull private pointer from 0 */
-    auto p = gam::pull_private<gam_vector<int>>(); //from-any just for testing
-
-    /* test and add */
-    auto lp = p.local();
-    assert(lp->size() == 1);
-    assert(lp->at(0) == 42);
-    lp->push_back(43);
-
-    /* push back to 0 */
-    p = gam::private_ptr<gam_vector<int>>(std::move(lp));
-    p.push(0);
+    // here end-of-scope triggers the destructor on the original object
+  }
+  std::vector<int> ref(10, 42);
+  assert(*lp->get() == ref);
 }
 
 /*
@@ -118,18 +94,13 @@ void r1()
  *
  *******************************************************************************
  */
-int main(int argc, char * argv[])
-{
-    /* rank-specific code */
-    switch (gam::rank())
-    {
+int main(int argc, char *argv[]) {
+  /* rank-specific code */
+  switch (gam::rank()) {
     case 0:
-        r0();
-        break;
-    case 1:
-        r1();
-        break;
-    }
+      r0();
+      break;
+  }
 
-    return 0;
+  return 0;
 }

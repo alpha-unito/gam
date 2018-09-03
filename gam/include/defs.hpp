@@ -70,14 +70,6 @@ void default_deleter(T *p)
     delete p;
 }
 
-struct marshalled_entry {
-	void *base;
-	size_t size;
-	marshalled_entry(void *base_, size_t size_) : base(base_), size(size_) {
-	}
-};
-using marshalled_t = std::vector<marshalled_entry>;
-
 } /* namespace gam */
 
 #endif /* GAM_INCLUDE_DEFS_HPP_ */
