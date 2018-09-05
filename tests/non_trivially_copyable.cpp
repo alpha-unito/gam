@@ -57,6 +57,27 @@ struct gam_indirect_vector {
     vptr = nullptr;
   }
 
+  /* ingesting constructor */
+  template <typename StreamInF>
+  void ingest(StreamInF &&f) {
+    typename std::vector<T>::size_type in_size;
+    f(&in_size, sizeof(vsize_t));
+    assert(!this->vptr);
+    this->vptr = new std::vector<T>();
+    this->vptr->resize(in_size);
+    assert(this->vptr->size() == in_size);
+    f(this->vptr->data(), in_size * sizeof(T));
+  }
+
+  /* marshalling function */
+  gam::marshalled_t marshall() {
+    gam::marshalled_t res;
+    size_ = this->vptr->size();
+    res.emplace_back(&size_, sizeof(vsize_t));
+    res.emplace_back(this->vptr->data(), size_ * sizeof(T));
+    return res;
+  }
+
   std::vector<T> *get() { return vptr; }
 
  private:
@@ -85,6 +106,28 @@ void r0() {
   }
   std::vector<int> ref(10, 42);
   assert(*lp->get() == ref);
+
+  auto p = gam::make_public<gam_indirect_vector<int>>(10, 43);
+  p.push(1);
+
+  auto q = gam::make_private<gam_indirect_vector<int>>(10, 44);
+  q.push(1);
+}
+
+void r1() {
+  std::shared_ptr<gam_indirect_vector<int>> lp = nullptr;
+  {
+    auto p = gam::pull_public<gam_indirect_vector<int>>(0);
+    lp = p.local();
+    // here end-of-scope triggers the destructor on the original object
+  }
+  std::vector<int> ref(10, 43);
+  assert(*lp->get() == ref);
+
+  auto q = gam::pull_private<gam_indirect_vector<int>>(0);
+  auto lq = q.local();
+  std::vector<int> qref(10, 44);
+  assert(*lq->get() == qref);
 }
 
 /*
@@ -99,6 +142,9 @@ int main(int argc, char *argv[]) {
   switch (gam::rank()) {
     case 0:
       r0();
+      break;
+    case 1:
+      r1();
       break;
   }
 
