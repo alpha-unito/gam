@@ -103,7 +103,7 @@ for e in range(args.cardinality):
     # execute
     if(args.verbose):
         print "> starting node = " + str(e)
-    p = Popen(CMD, env=my_env, stdout=out_file, stderr=err_file)
+    p = Popen(CMD, env=my_env, stdout=sys.stdout, stderr=sys.stderr)
 
     inflight.append(p)
     exec_map[p] = e

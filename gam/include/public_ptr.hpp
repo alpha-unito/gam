@@ -265,6 +265,12 @@ public:
      *
      ***************************************************************************
      */
+
+    unsigned long long use_count() const
+    {
+    	return ctx().get_rc(internal_gp);
+    }
+
     void reset() noexcept
     {
         ctx().rc_dec(internal_gp);

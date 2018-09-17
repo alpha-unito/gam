@@ -654,6 +654,11 @@ public:
         local_allocator.delete_(ptr);
     }
 
+    inline unsigned long long get_rc(GlobalPointer gp)
+    {
+    	return mc.get_rc(gp.address());
+    }
+
 private:
     executor_id rank_, cardinality_;
     std::vector<std::string> hostnames;
