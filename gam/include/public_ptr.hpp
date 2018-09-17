@@ -246,7 +246,7 @@ public:
      */
     void push(executor_id to) const
     {
-        USRASSERT(to != ctx().rank() && to < ctx().cardinality());
+    	USRASSERT(ctx().cardinality());
         if (internal_gp.is_address())
         {
             //pointer brings a global address
@@ -265,6 +265,12 @@ public:
      *
      ***************************************************************************
      */
+
+    unsigned long long use_count() const
+    {
+    	return ctx().get_rc(internal_gp);
+    }
+
     void reset() noexcept
     {
         ctx().rc_dec(internal_gp);

@@ -76,6 +76,13 @@ public:
         return res;
     }
 
+    inline unsigned long long get_rc(uint64_t a)
+    {
+    	unsigned long long res = ref_cnt[a];
+    	LOGLN("SMC %llu = %llu", a, res);
+    	return res;
+    }
+
 private:
     /*
      * Reference count, for each address the process is author of.
