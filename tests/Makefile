@@ -59,7 +59,7 @@ ARCH                 = -march=$(shell uname -m)
 
 INCLUDES             = -I. $(INCS)
 TARGET               = pingpong mtu \
-simple_public simple_private simple_publish non_trivially_copyable non_trivially_copyable_pingpong
+simple_public simple_private simple_publish non_trivially_copyable
 
 .PHONY: all clean distclean
 .SUFFIXES: .cpp .o
@@ -76,7 +76,6 @@ simple_public: simple_public.o
 simple_private: simple_private.o
 simple_publish: simple_publish.o
 non_trivially_copyable: non_trivially_copyable.o
-non_trivially_copyable_pingpong: non_trivially_copyable_pingpong.o
 
 mtu: mtu_main.o mtu_ranks.o
 	$(CXX) $^ -o $@ $(LDFLAGS) $(LIBS)
