@@ -246,7 +246,6 @@ public:
      */
     void push(executor_id to) const
     {
-       // USRASSERT(to != ctx().rank() && to < ctx().cardinality());
     	USRASSERT(ctx().cardinality());
         if (internal_gp.is_address())
         {
