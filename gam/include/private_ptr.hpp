@@ -28,6 +28,7 @@
 #define GAM_INCLUDE_PRIVATE_PTR_HPP_
 
 #include "Context.hpp"  //ctx
+#include "GlobalPointer.hpp"
 #include "Logger.hpp"
 #include "gam_unique_ptr.hpp"
 #include "utils.hpp"
