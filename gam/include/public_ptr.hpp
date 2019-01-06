@@ -256,9 +256,9 @@ class public_ptr {
    *
    ***************************************************************************
    */
-  public_ptr(nullptr_t) noexcept {}
+  public_ptr(std::nullptr_t) noexcept {}
 
-  public_ptr &operator=(nullptr_t) noexcept {
+  public_ptr &operator=(std::nullptr_t) noexcept {
     if (internal_gp.is_address()) {
       LOGLN_OS("PUB nullptr assignment sub=" << *this);
       reset();
@@ -267,15 +267,15 @@ class public_ptr {
     return *this;
   }
 
-  bool operator==(nullptr_t) noexcept { return internal_gp.address() == 0; }
+  bool operator==(std::nullptr_t) noexcept { return internal_gp.address() == 0; }
 
-  friend bool operator==(nullptr_t, const public_ptr &__x) noexcept {
+  friend bool operator==(std::nullptr_t, const public_ptr &__x) noexcept {
     return __x == nullptr;
   }
 
-  bool operator!=(nullptr_t) noexcept { return internal_gp.address() != 0; }
+  bool operator!=(std::nullptr_t) noexcept { return internal_gp.address() != 0; }
 
-  friend bool operator!=(nullptr_t, const public_ptr &__x) noexcept {
+  friend bool operator!=(std::nullptr_t, const public_ptr &__x) noexcept {
     return __x != nullptr;
   }
 
