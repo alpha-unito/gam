@@ -101,9 +101,14 @@ public:
     {
         LOGLN("LKS @%p adding SEND to=%llu node=%s svc=%s", this, i, node, svc);
 
+        // translate the address
+        struct fi_info *fi;
+        fl_dst_addr(node, svc, &fi, 0);
+
         //insert address to AV
         fi_addr_t fi_addr;
-        fi_av_insertsvc(av, node, svc, &fi_addr, 0, NULL);
+        int ret = fi_av_insert(av, fi->dest_addr, 1, &fi_addr, 0, NULL);
+        assert(ret == 1);
 
         //map rank to av index
         rank_to_addr[i] = fi_addr;
