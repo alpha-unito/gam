@@ -7,7 +7,7 @@ matrix:
         homebrew:
           packages:
             - libfabric
-          update: true
+#         update: true
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
 #    
