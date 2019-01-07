@@ -49,6 +49,7 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LIBFABRIC DEFAULT_MSG LIBFABRIC_LIBRARIES)
 
 if(LIBFABRIC_FOUND)
+  message(STATUS "LIBFABRIC_FOUND")
   if(NOT TARGET libfabric::libfabric)
     add_library(libfabric::libfabric INTERFACE IMPORTED)
     if(LIBFABRIC_INCLUDE_DIRS)
