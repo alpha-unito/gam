@@ -70,6 +70,7 @@ before_install:
   - cd ..
 
 script:
+  - export LD_LIBRARY_PATH=$HOME/lib:$LD_LIBRARY_PATH
   - cd tests
   - make test-local
   - cat logs/*/latest/usr.0.err*
