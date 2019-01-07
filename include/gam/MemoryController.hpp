@@ -22,8 +22,8 @@
  * @brief       a short description of the source file
  *
  */
-#ifndef GAM_INCLUDE_MEMORYCONTROLLER_HPP_
-#define GAM_INCLUDE_MEMORYCONTROLLER_HPP_
+#ifndef INCLUDE_GAM_MEMORYCONTROLLER_HPP_
+#define INCLUDE_GAM_MEMORYCONTROLLER_HPP_
 
 #include <atomic>
 #include <cstdint>
@@ -31,7 +31,7 @@
 #include <queue>
 #include <thread>
 
-#include "Logger.hpp"
+#include "gam/Logger.hpp"
 
 namespace gam {
 
@@ -86,4 +86,4 @@ class MemoryController {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_MEMORYCONTROLLER_HPP_ */
+#endif /* INCLUDE_GAM_MEMORYCONTROLLER_HPP_ */

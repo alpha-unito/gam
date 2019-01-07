@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef GAM_INCLUDE_LINKS_STUB_HPP_
-#define GAM_INCLUDE_LINKS_STUB_HPP_
+#ifndef INCLUDE_GAM_LINKS_STUB_HPP_
+#define INCLUDE_GAM_LINKS_STUB_HPP_
 
 #include <algorithm>
 #include <vector>
@@ -36,9 +36,9 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
 
-#include "GlobalPointer.hpp"
-#include "Logger.hpp"
-#include "defs.hpp"
+#include "gam/defs.hpp"
+#include "gam/GlobalPointer.hpp"
+#include "gam/Logger.hpp"
 
 namespace gam {
 
@@ -120,4 +120,4 @@ class links_stub {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_LINKS_STUB_HPP_ */
+#endif /* INCLUDE_GAM_LINKS_STUB_HPP_ */

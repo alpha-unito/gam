@@ -24,12 +24,12 @@
  *
  */
 
-#ifndef GAM_INCLUDE_GAM_UNIQUE_PTR_HPP_
-#define GAM_INCLUDE_GAM_UNIQUE_PTR_HPP_
+#ifndef INCLUDE_GAM_GAM_UNIQUE_PTR_HPP_
+#define INCLUDE_GAM_GAM_UNIQUE_PTR_HPP_
 
 #include <memory>
 
-#include "TrackingAllocator.hpp"
+#include "gam/TrackingAllocator.hpp"
 
 namespace gam {
 
@@ -55,4 +55,4 @@ gam_unique_ptr<_Tp> make_gam_unique(_Args &&... __args) {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_GAM_UNIQUE_PTR_HPP_ */
+#endif /* INCLUDE_GAM_GAM_UNIQUE_PTR_HPP_ */

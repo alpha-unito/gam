@@ -27,8 +27,8 @@
  * on top of connection-less libfabric API.
  */
 
-#ifndef GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_
-#define GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_
+#ifndef INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_
+#define INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_
 
 #include <algorithm>
 #include <cassert>
@@ -39,9 +39,10 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
 
-#include "../defs.hpp"
-#include "GlobalPointer.hpp"
-#include "Logger.hpp"
+#include "gam/GlobalPointer.hpp"
+#include "gam/Logger.hpp"
+#include "gam/defs.hpp"
+#include "gam/links_implementations/fl_common.hpp"
 
 #include "fl_common.hpp"
 
@@ -244,4 +245,4 @@ class fl_connectionless {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_ */
+#endif /* INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_CONNECTIONLESS_HPP_ */

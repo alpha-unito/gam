@@ -46,21 +46,21 @@
 #include <thread>
 #include <vector>
 
-#include "Cache.hpp"
-#include "GlobalPointer.hpp"
-#include "Logger.hpp"
-#include "MemoryController.hpp"
-#include "View.hpp"
-#include "backend_ptr.hpp"
-#include "defs.hpp"
-#include "links_stub.hpp"
-#include "utils.hpp"
-#include "wrapped_allocator.hpp"
+#include "gam/backend_ptr.hpp"
+#include "gam/Cache.hpp"
+#include "gam/defs.hpp"
+#include "gam/GlobalPointer.hpp"
+#include "gam/links_stub.hpp"
+#include "gam/Logger.hpp"
+#include "gam/MemoryController.hpp"
+#include "gam/utils.hpp"
+#include "gam/View.hpp"
+#include "gam/wrapped_allocator.hpp"
 
 #ifdef CONNECTION_LINKS
 #include "links_implementations/fl_connection.hpp"
 #else
-#include "links_implementations/fl_connectionless.hpp"
+#include "gam/links_implementations/fl_connectionless.hpp"
 #endif
 
 namespace gam {

@@ -24,14 +24,14 @@
  * @ingroup api
  *
  */
-#ifndef GAM_INCLUDE_PRIVATE_PTR_HPP_
-#define GAM_INCLUDE_PRIVATE_PTR_HPP_
+#ifndef INCLUDE_GAM_PRIVATE_PTR_HPP_
+#define INCLUDE_GAM_PRIVATE_PTR_HPP_
 
-#include "Context.hpp"  //ctx
-#include "GlobalPointer.hpp"
-#include "Logger.hpp"
-#include "gam_unique_ptr.hpp"
-#include "utils.hpp"
+#include "gam/Context.hpp"  //ctx
+#include "gam/gam_unique_ptr.hpp"
+#include "gam/GlobalPointer.hpp"
+#include "gam/Logger.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -324,4 +324,4 @@ private_ptr<T> pull_private() noexcept {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_PRIVATE_PTR_HPP_ */
+#endif /* INCLUDE_GAM_PRIVATE_PTR_HPP_ */

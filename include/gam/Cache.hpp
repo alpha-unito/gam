@@ -25,15 +25,15 @@
  * @todo bounded size
  */
 
-#ifndef GAM_INCLUDE_CACHE_HPP_
-#define GAM_INCLUDE_CACHE_HPP_
+#ifndef INCLUDE_GAM_CACHE_HPP_
+#define INCLUDE_GAM_CACHE_HPP_
 
 #include <unordered_map>
 
-#include "Logger.hpp"
-#include "backend_ptr.hpp"
-#include "utils.hpp"
-#include "wrapped_allocator.hpp"
+#include "gam/backend_ptr.hpp"
+#include "gam/Logger.hpp"
+#include "gam/utils.hpp"
+#include "gam/wrapped_allocator.hpp"
 
 namespace gam {
 
@@ -83,4 +83,4 @@ class Cache {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_CACHE_HPP_ */
+#endif /* INCLUDE_GAM_CACHE_HPP_ */

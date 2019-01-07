@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GAM_INCLUDE_CONCURRENTMAPWRAP_HPP_
-#define GAM_INCLUDE_CONCURRENTMAPWRAP_HPP_
+#ifndef INCLUDE_GAM_CONCURRENTMAPWRAP_HPP_
+#define INCLUDE_GAM_CONCURRENTMAPWRAP_HPP_
 
 #include <mutex>
 
@@ -82,4 +82,4 @@ class ConcurrentMapWrap {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_CONCURRENTMAPWRAP_HPP_ */
+#endif /* INCLUDE_GAM_CONCURRENTMAPWRAP_HPP_ */

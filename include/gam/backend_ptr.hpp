@@ -22,11 +22,11 @@
  * @brief       a short description of the source file
  *
  */
-#ifndef GAM_INCLUDE_BACKEND_PTR_HPP_
-#define GAM_INCLUDE_BACKEND_PTR_HPP_
+#ifndef INCLUDE_GAM_BACKEND_PTR_HPP_
+#define INCLUDE_GAM_BACKEND_PTR_HPP_
 
-#include "TrackingAllocator.hpp"
-#include "defs.hpp"
+#include "gam/defs.hpp"
+#include "gam/TrackingAllocator.hpp"
 
 namespace gam {
 
@@ -69,4 +69,4 @@ class backend_typed_ptr : public backend_ptr {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_BACKEND_PTR_HPP_ */
+#endif /* INCLUDE_GAM_BACKEND_PTR_HPP_ */
