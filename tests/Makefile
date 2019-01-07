@@ -22,7 +22,7 @@
 # the following paths are used only for building
 #
 #########################################################################
-GAM_HOME             ?= ../gam
+GAM_HOME             ?= ..
 GAM_INCS             = $(GAM_HOME)/include
 GAM_RUN              = $(GAM_HOME)/bin/gamrun
 GAM_RUN_LOCAL        = $(GAM_HOME)/bin/gamrun-local

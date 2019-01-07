@@ -23,8 +23,8 @@
  * @brief defines global types
  */
 
-#ifndef GAM_INCLUDE_DEFS_HPP_
-#define GAM_INCLUDE_DEFS_HPP_
+#ifndef INCLUDE_GAM_DEFS_HPP_
+#define INCLUDE_GAM_DEFS_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -73,4 +73,4 @@ using marshalled_t = std::vector<marshalled_entry>;
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_DEFS_HPP_ */
+#endif /* INCLUDE_GAM_DEFS_HPP_ */

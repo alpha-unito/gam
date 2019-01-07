@@ -24,14 +24,14 @@
  * @ingroup internals
  *
  */
-#ifndef GAM_INCLUDE_TRACKINGALLOCATOR_HPP_
-#define GAM_INCLUDE_TRACKINGALLOCATOR_HPP_
+#ifndef INCLUDE_GAM_TRACKINGALLOCATOR_HPP_
+#define INCLUDE_GAM_TRACKINGALLOCATOR_HPP_
 
 #include <mutex>
 #include <unordered_map>
 
-#include "ConcurrentMapWrap.hpp"
-#include "utils.hpp"
+#include "gam/ConcurrentMapWrap.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -126,4 +126,4 @@ class TrackingAllocator {
 }  // namespace gam
 /* namespace gam */
 
-#endif /* GAM_INCLUDE_TRACKINGALLOCATOR_HPP_ */
+#endif /* INCLUDE_GAM_TRACKINGALLOCATOR_HPP_ */

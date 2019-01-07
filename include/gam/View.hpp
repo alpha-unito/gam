@@ -26,17 +26,17 @@
  * @todo consider partial embedding of view tables into pointers
  *
  */
-#ifndef GAM_INCLUDE_VIEW_HPP_
-#define GAM_INCLUDE_VIEW_HPP_
+#ifndef INCLUDE_GAM_VIEW_HPP_
+#define INCLUDE_GAM_VIEW_HPP_
 
 #include <mutex>
 #include <sstream>
 #include <unordered_map>
 
-#include "ConcurrentMapWrap.hpp"
-#include "GlobalPointer.hpp"
-#include "backend_ptr.hpp"
-#include "defs.hpp"
+#include "gam/backend_ptr.hpp"
+#include "gam/ConcurrentMapWrap.hpp"
+#include "gam/defs.hpp"
+#include "gam/GlobalPointer.hpp"
 
 namespace gam {
 
@@ -193,4 +193,4 @@ class View {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_VIEW_HPP_ */
+#endif /* INCLUDE_GAM_VIEW_HPP_ */

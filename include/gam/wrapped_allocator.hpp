@@ -24,12 +24,12 @@
  * @ingroup internals
  *
  */
-#ifndef GAM_INCLUDE_WRAPPED_ALLOCATOR_HPP_
-#define GAM_INCLUDE_WRAPPED_ALLOCATOR_HPP_
+#ifndef INCLUDE_GAM_WRAPPED_ALLOCATOR_HPP_
+#define INCLUDE_GAM_WRAPPED_ALLOCATOR_HPP_
 
 #include <cstdlib>
 
-#include "TrackingAllocator.hpp"
+#include "gam/TrackingAllocator.hpp"
 
 namespace gam {
 

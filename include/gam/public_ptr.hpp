@@ -24,18 +24,18 @@
  * @ingroup api
  *
  */
-#ifndef GAM_INCLUDE_PUBLIC_PTR_HPP_
-#define GAM_INCLUDE_PUBLIC_PTR_HPP_
+#ifndef INCLUDE_GAM_PUBLIC_PTR_HPP_
+#define INCLUDE_GAM_PUBLIC_PTR_HPP_
 
 #include <cstdint>
 #include <unordered_map>
 
-#include "Context.hpp"  //ctx
-#include "GlobalPointer.hpp"
-#include "Logger.hpp"
-#include "gam_unique_ptr.hpp"
-#include "private_ptr.hpp"
-#include "utils.hpp"
+#include "gam/Context.hpp"  //ctx
+#include "gam/gam_unique_ptr.hpp"
+#include "gam/GlobalPointer.hpp"
+#include "gam/Logger.hpp"
+#include "gam/private_ptr.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -323,4 +323,4 @@ public_ptr<T> pull_public() noexcept {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_PUBLIC_PTR_HPP_ */
+#endif /* INCLUDE_GAM_PUBLIC_PTR_HPP_ */

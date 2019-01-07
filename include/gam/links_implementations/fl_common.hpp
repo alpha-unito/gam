@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_
-#define GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_
+#ifndef INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_
+#define INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_
 
 #include <cassert>
 #include <cstdint>
@@ -34,7 +34,7 @@
 
 #include <rdma/fi_domain.h>
 
-#include "utils.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -183,4 +183,4 @@ static ssize_t fl_tx(fid_ep *ep, fid_cq *txcq, const void *tx_buf,
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_ */
+#endif /* INCLUDE_GAM_LINKS_IMPLEMENTATIONS_FL_COMMON_HPP_ */

@@ -25,14 +25,14 @@
  * @ingroup api
  *
  */
-#ifndef GAM_INCLUDE_GLOBALPOINTER_HPP_
-#define GAM_INCLUDE_GLOBALPOINTER_HPP_
+#ifndef INCLUDE_GAM_GLOBALPOINTER_HPP_
+#define INCLUDE_GAM_GLOBALPOINTER_HPP_
 
 #include <cstdint>
 #include <limits>
 
-#include "Logger.hpp"
-#include "utils.hpp"
+#include "gam/Logger.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -126,4 +126,4 @@ class GlobalPointer {
 
 } /* namespace gam */
 
-#endif /* GAM_INCLUDE_GLOBALPOINTER_HPP_ */
+#endif /* INCLUDE_GAM_GLOBALPOINTER_HPP_ */

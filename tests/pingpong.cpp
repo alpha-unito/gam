@@ -27,8 +27,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <TrackingAllocator.hpp>
-#include <gam.hpp>
+#include "gam/gam.hpp"
 
 /*
  *******************************************************************************

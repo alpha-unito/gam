@@ -24,7 +24,7 @@
  *
  */
 
-#include <gam.hpp>
+#include "gam/gam.hpp"
 
 #include "mtu.h"
 

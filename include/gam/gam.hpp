@@ -37,29 +37,15 @@
 #ifndef GAM_HPP_
 #define GAM_HPP_
 
-#include "Context.hpp"  //ctx
-#include "GlobalPointer.hpp"
-#include "defs.hpp"
-#include "private_ptr.hpp"
-#include "public_ptr.hpp"
-#include "utils.hpp"
+#include "gam/Context.hpp"  //ctx
+#include "gam/GlobalPointer.hpp"
+#include "gam/TrackingAllocator.hpp"
+#include "gam/defs.hpp"
+#include "gam/private_ptr.hpp"
+#include "gam/public_ptr.hpp"
+#include "gam/utils.hpp"
 
 namespace gam {
-/**
- * @brief initializes GAM executor
- */
-// void init()
-//{
-//    ctx.init();
-//}
-//
-///**
-// * @brief finalizes GAM executor
-// */
-// void finalize()
-//{
-//    ctx.finalize();
-//}
 
 /**
  * @brief returns GAM rank
