@@ -13,4 +13,7 @@ matrix:
 script:
   - cd tests
   - make test-local
+  - mkdir ../build && cd ../build
+  - cmake ..
+  - cmake --build . 
 
