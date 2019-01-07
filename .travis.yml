@@ -2,9 +2,14 @@ language: cpp
 
 matrix:
   include:
-#    - os: osx
-#      env:
-#        - MATRIX_EVAL="CC=clang && CXX=clang++"
+    - os: osx
+      addons:
+        homebrew:
+          packages:
+            - libfabric
+          update: true
+      env:
+        - MATRIX_EVAL="CC=clang && CXX=clang++"
 #    
 #    - os: linux
 #      addons:
@@ -47,16 +52,16 @@ matrix:
 #            - clang-5.0
 #      env:
 #        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-
-    - os: linux
-      dist: xenial
-      addons:
-        apt:
-          packages:
-            - clang-6.0
-            - libfabric-dev
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+#
+#    - os: linux
+#      dist: xenial
+#      addons:
+#        apt:
+#          packages:
+#            - clang-6.0
+#            - libfabric-dev
+#      env:
+#        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
 
 
 # before_install:
