@@ -32,11 +32,14 @@
 #include <cstdint>
 #include <cstdio>
 
+#include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 
 #include "gam/utils.hpp"
 
 namespace gam {
+
+constexpr auto FL_FI_VERSION = FI_VERSION(1, 6);
 
 static struct fi_info *fl_info_;
 static struct fid_fabric *fl_fabric_;
@@ -56,7 +59,7 @@ static void fl_getinfo(fi_info **fi,                           //
   hints->ep_attr->type = ep_type;
 
   // query fabric contexts
-  ret = fi_getinfo(FI_VERSION(1, 3), node, service, flags, hints, fi);
+  ret = fi_getinfo(FL_FI_VERSION, node, service, flags, hints, fi);
   assert(!ret);
 
   for (fi_info *cur = *fi; cur; cur = cur->next) {
