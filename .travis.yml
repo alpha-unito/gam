@@ -72,4 +72,5 @@ before_install:
 script:
   - cd tests
   - make test-local
+  - cat logs/*/latest/usr.0.err*
 
