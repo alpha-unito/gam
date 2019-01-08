@@ -25,46 +25,36 @@ if(NOT (PC_LIBFABRIC_FOUND STREQUAL "IGNORE"))
     endif()
     set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
 
-    pkg_check_modules(PC_LIBFABRIC libfabric)
+    pkg_check_modules(LIBFABRIC libfabric)
 
     set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
     unset(_CMAKE_PREFIX_PATH)
-
-    if(PC_LIBFABRIC_FOUND)
-      message(STATUS "PC_LIBFABRIC_FOUND")
-      set(LIBFABRIC_INCLUDE_DIRS ${PC_LIBFABRIC_INCLUDE_DIRS})
-      message(STATUS "LIBFABRIC_INCLUDE_DIRS=${LIBFABRIC_INCLUDE_DIRS}")
-      set(LIBFABRIC_LIBRARIES ${PC_LIBFABRIC_LIBRARIES})
-      message(STATUS "LIBFABRIC_LIBRARIES=${LIBFABRIC_LIBRARIES}")
-      set(LIBFABRIC_DEFINITIONS ${PC_LIBFABRIC_CFLAGS_OTHER})
-      message(STATUS "LIBFABRIC_DEFINITIONS=${LIBFABRIC_DEFINITIONS}")
-    endif()
   endif()
 endif()
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LIBFABRIC_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(LIBFABRIC DEFAULT_MSG PC_LIBFABRIC_LDFLAGS)
+find_package_handle_standard_args(LIBFABRIC DEFAULT_MSG
+                                  LIBFABRIC_INCLUDE_DIRS
+                                  LIBFABRIC_LIBRARY_DIRS LIBFABRIC_LIBRARIES)
 
 if(LIBFABRIC_FOUND)
-  message(STATUS "LIBFABRIC_FOUND")
   if(NOT TARGET libfabric::libfabric)
     add_library(libfabric::libfabric INTERFACE IMPORTED)
-    if(LIBFABRIC_INCLUDE_DIRS)
-      set_target_properties(libfabric::libfabric PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${LIBFABRIC_INCLUDE_DIRS}"
-      )
-    endif()
+    set_target_properties(libfabric::libfabric PROPERTIES
+                          INTERFACE_INCLUDE_DIRECTORIES
+                          "${LIBFABRIC_INCLUDE_DIRS}")
     if(LIBFABRIC_DEFINITIONS)
       set_target_properties(libfabric::libfabric PROPERTIES
-        INTERFACE_COMPILE_OPTIONS     "${LIBFABRIC_DEFINITIONS}"
-      )
+                            INTERFACE_COMPILE_OPTIONS
+                            "${LIBFABRIC_DEFINITIONS}")
     endif()
-    if(LIBFABRIC_LIBRARIES)
-      set_target_properties(libfabric::libfabric PROPERTIES
-        INTERFACE_LINK_LIBRARIES      "${PC_LIBFABRIC_LDFLAGS}"
-      )
-    endif()
+    set_target_properties(libfabric::libfabric PROPERTIES
+                          INTERFACE_LINK_DIRECTORIES
+                          "${LIBFABRIC_LIBRARY_DIRS}")
+    set_target_properties(libfabric::libfabric PROPERTIES
+                          INTERFACE_LINK_LIBRARIES
+                          "${LIBFABRIC_LIBRARIES}")
   endif()
 endif()
