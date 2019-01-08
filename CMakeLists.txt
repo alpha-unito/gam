@@ -66,7 +66,7 @@ endif()
 
 # Unit tests
 if (GAM_ENABLE_UNIT_TEST)
-  # TODO CTest
+  include(CTest)
   add_subdirectory(tests)
 endif()
 
