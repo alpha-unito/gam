@@ -27,7 +27,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "gam/gam.hpp"
+#include "gam.hpp"
 
 #include "mtu.h"
 
