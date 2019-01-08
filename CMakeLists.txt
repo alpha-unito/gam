@@ -46,6 +46,12 @@ set(
   GAM_RUNTIME_SYSTEM "libfabric" CACHE STRING
   "Runtime system to be used as backend (Default=libfabric, Supported=libfabric)")
 
+# check runtime system
+if (GAM_RUNTIME_SYSTEM AND NOT GAM_RUNTIME_SYSTEM  MATCHES
+    "^(libfabric)$")
+  message(FATAL_ERROR "Invalid value for GAM_RUNTIME_SYSTEM: ${GAM_RUNTIME_SYSTEM}")
+endif()
+
 # define the target library
 add_library(gam INTERFACE)
 add_library(gam::gam ALIAS gam)
