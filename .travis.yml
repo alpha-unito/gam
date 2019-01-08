@@ -11,9 +11,8 @@ matrix:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
 
 script:
-  - cd tests
-    #  - make test-local
-  - mkdir ../build && cd ../build
+  - mkdir build && cd build
   - cmake ..
-  - cmake --build . 
+  - cmake --build .
+  - ctest
 
