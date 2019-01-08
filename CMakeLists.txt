@@ -58,6 +58,10 @@ target_include_directories(gam INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>)
 
 # target attributes: dependencies
+find_package(Threads REQUIRED)
+target_link_libraries(gam INTERFACE Threads::Threads)
+
+# target attributes: implementation-specific dependencies
 if (GAM_RUNTIME_SYSTEM STREQUAL "libfabric")
   message(STATUS "Using libfabric runtime system.")
   find_package(Libfabric REQUIRED)
