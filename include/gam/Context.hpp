@@ -126,13 +126,17 @@ class Context {
     std::string env_prefix = "GAM_", env_name;
     for (unsigned long long i = 0; i < cardinality_; ++i) {
       env_name = env_prefix + "NODE_" + std::to_string(i);
-      assert((node.host = std::getenv(env_name.c_str())));
+      node.host = std::getenv(env_name.c_str());
+      assert(node.host);
       env_name = env_prefix + "SVC_PAP_" + std::to_string(i);
-      assert((node.svc_pap = std::getenv(env_name.c_str())));
+      node.svc_pap = std::getenv(env_name.c_str());
+      assert(node.svc_pap);
       env_name = env_prefix + "SVC_MEM_" + std::to_string(i);
-      assert((node.svc_local = std::getenv(env_name.c_str())));
+      node.svc_local = std::getenv(env_name.c_str());
+      assert(node.svc_local);
       env_name = env_prefix + "SVC_DMN_" + std::to_string(i);
-      assert((node.svc_remote = std::getenv(env_name.c_str())));
+      node.svc_remote = std::getenv(env_name.c_str());
+      assert(node.svc_remote);
       nodes.push_back(node);
       LOGLN("CTX rank %llu: node=%s svc_pap=%s svc_mem=%s svc_dmn=%s",  //
             i, node.host, node.svc_pap, node.svc_local, node.svc_remote);
