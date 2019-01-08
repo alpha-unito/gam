@@ -39,7 +39,7 @@
 
 namespace gam {
 
-constexpr auto FL_FI_VERSION = FI_VERSION(1, 6);
+constexpr auto FL_FI_VERSION = FI_VERSION(1, 4);
 
 static struct fi_info *fl_info_;
 static struct fid_fabric *fl_fabric_;
