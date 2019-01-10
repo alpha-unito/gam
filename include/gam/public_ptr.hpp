@@ -233,7 +233,7 @@ class public_ptr {
    ***************************************************************************
    */
 
-  unsigned long long use_count() const { return ctx().get_rc(internal_gp); }
+  unsigned long long use_count() const { return ctx().rc_get(internal_gp); }
 
   void reset() noexcept {
     ctx().rc_dec(internal_gp);
