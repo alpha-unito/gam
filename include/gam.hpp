@@ -19,51 +19,45 @@
  */
 
 /**
- *
- * @brief       testing compilation with multiple translation units - main
- *
+ * @defgroup api GAM API
  */
 
-#include <cassert>
-#include <iostream>
-
-#include "gam.hpp"
-
-#include "mtu.h"
-
-typedef int val_t;
-
-void r2() {
-  /* pull, do not push */
-  auto p = gam::pull_private<val_t>(1);
-  assert(p != nullptr);
-
-  /* pull, access, do not push */
-  p = gam::pull_private<val_t>(1);  // overwrite
-  assert(p != nullptr);
-  assert(*p.local() == 44);
-}
-
-/*
- *******************************************************************************
+/**
+ * This file implements the GAM API.
  *
- * main
+ * @brief       the GAM API
  *
- *******************************************************************************
+ * @ingroup api
+ *
+ * @todo non-blocking pull
+ * @todo pull from any
+ * @todo inlining
+ *
  */
-int main(int argc, char* argv[]) {
-  /* rank-specific code */
-  switch (gam::rank()) {
-    case 0:
-      r0();
-      break;
-    case 1:
-      r1();
-      break;
-    case 2:
-      r2();
-      break;
-  }
+#ifndef GAM_HPP_
+#define GAM_HPP_
 
-  return 0;
-}
+#include "gam/Context.hpp"  //ctx
+#include "gam/GlobalPointer.hpp"
+#include "gam/TrackingAllocator.hpp"
+#include "gam/defs.hpp"
+#include "gam/private_ptr.hpp"
+#include "gam/public_ptr.hpp"
+#include "gam/utils.hpp"
+
+namespace gam {
+
+/**
+ * @brief returns GAM rank
+ *
+ * The rank of a GAM executor is its index in the space of executors.
+ * Namely, it ranges from 1 to the number of executors.
+ *
+ */
+static inline executor_id rank() { return ctx().rank(); }
+
+static inline executor_id cardinality() { return ctx().cardinality(); }
+
+} /* namespace gam */
+
+#endif /* GAM_HPP_ */
