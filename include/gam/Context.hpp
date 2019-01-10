@@ -46,15 +46,15 @@
 #include <thread>
 #include <vector>
 
-#include "gam/backend_ptr.hpp"
 #include "gam/Cache.hpp"
-#include "gam/defs.hpp"
 #include "gam/GlobalPointer.hpp"
-#include "gam/links_stub.hpp"
 #include "gam/Logger.hpp"
 #include "gam/MemoryController.hpp"
-#include "gam/utils.hpp"
 #include "gam/View.hpp"
+#include "gam/backend_ptr.hpp"
+#include "gam/defs.hpp"
+#include "gam/links_stub.hpp"
+#include "gam/utils.hpp"
 #include "gam/wrapped_allocator.hpp"
 
 #ifdef CONNECTION_LINKS
@@ -568,6 +568,12 @@ class Context {
       forward_dec(p);
   }
 
+  inline unsigned long long rc_get(GlobalPointer gp) {
+    DBGASSERT(gp.is_address());
+    uint64_t a = gp.address();
+    return view.author(a) == rank_ ? local_rc_get(a) : forward_rc(gp);
+  }
+
   /*
    ***************************************************************************
    *
@@ -607,10 +613,6 @@ class Context {
     local_allocator.delete_(ptr);
   }
 
-  inline unsigned long long get_rc(GlobalPointer gp) {
-    return mc.get_rc(gp.address());
-  }
-
  private:
   executor_id rank_, cardinality_;
   std::vector<std::string> hostnames;
@@ -638,7 +640,7 @@ class Context {
   };
 
   struct daemon_pointer {
-    enum { RLOAD, RC_INC, RC_DEC, PVT_RESET, DMN_END } op;
+    enum { RLOAD, RC_INC, RC_DEC, RC_GET, PVT_RESET, DMN_END } op;
     size_t size;  // remote-load size
     executor_id from;
     GlobalPointer p;
@@ -720,6 +722,13 @@ class Context {
             DBGASSERT(ctx.view.author(a) == ctx.rank());
             if (ctx.mc.rc_dec(a) == 0) ctx.unmap(a);
             break;
+          case daemon_pointer::RC_GET: {
+            LOGLN("DMN recv RC_GET %llu from %lu", a, p.from);
+            DBGASSERT(ctx.view.author(a) == ctx.rank_);
+            DBGASSERT(ctx.view.committed(a) != nullptr);
+            unsigned long long rc = ctx.local_rc_get(a);
+            ctx.remote_links->raw_send(&rc, sizeof(unsigned long long), p.from);
+          } break;
           case daemon_pointer::PVT_RESET:
             LOGLN("DMN recv PVT -1 %llu from %lu", a, p.from);
             DBGASSERT(ctx.view.author(a) == ctx.rank_);
@@ -836,6 +845,8 @@ class Context {
     *lp = *reinterpret_cast<T *>(view.committed(a)->get());
   }
 
+  inline unsigned long long local_rc_get(uint64_t a) { return mc.rc_get(a); }
+
   /*
    * actually transfer the private pointer to local memory
    *
@@ -884,6 +895,12 @@ class Context {
         [&](void *dst, size_t size) { local_links->raw_recv(dst, size, to); });
   }
 
+  unsigned long long recv_rc(executor_id to) {
+    unsigned long long res;
+    local_links->raw_recv(&res, sizeof(unsigned long long), to);
+    return res;
+  }
+
   template <typename T>
   void forward_load(T *lp, const GlobalPointer &p) {
     DBGASSERT(p.is_address());
@@ -900,6 +917,22 @@ class Context {
     local_links->send(dp, to);
 
     recv_kernel(lp, to, std::is_trivially_copyable<T>{});
+  }
+
+  unsigned long long forward_rc(const GlobalPointer &p) {
+    DBGASSERT(p.is_address());
+    uint64_t a = p.address();
+    executor_id to = view.author(a);
+    LOGLN("CTX fwd RC %llu dest=%lu", a, to);
+
+    /* send remote-rc request */
+    daemon_pointer dp;
+    dp.op = daemon_pointer::RC_GET;
+    dp.p = p;
+    dp.from = rank_;
+    local_links->send(dp, to);
+
+    return recv_rc(to);
   }
 
   inline void forward_inc(const GlobalPointer &p) {
