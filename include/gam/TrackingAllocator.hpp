@@ -31,7 +31,6 @@
 #include <unordered_map>
 
 #include "gam/ConcurrentMapWrap.hpp"
-#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -47,16 +46,16 @@ class TrackingAllocator {
     if (!inflight.empty()) {
       for (auto it : inflight)
         fprintf(stderr, "ALC %p %d\n", it.first, it.second);
-      DBGASSERT(false);
+      assert(false);
     }
   }
 
   void *malloc(size_t size) {
     void *res = ::malloc(size);
-    DBGASSERT(res);
+    assert(res);
 
     mtx.lock();
-    DBGASSERT(inflight.find(res) == inflight.end());
+    assert(inflight.find(res) == inflight.end());
     mtx.unlock();
 
     mtx.lock();
@@ -67,34 +66,34 @@ class TrackingAllocator {
   }
 
   void free(void *p) {
-    DBGASSERT(p != nullptr);
+    assert(p != nullptr);
 
     mtx.lock();
-    DBGASSERT(inflight.find(p) != inflight.end());
+    assert(inflight.find(p) != inflight.end());
     mtx.unlock();
 
     mtx.lock();
-    DBGASSERT(inflight[p] == MALLOC_);
+    assert(inflight[p] == MALLOC_);
     mtx.unlock();
 
     mtx.lock();
     alloc_map_t::size_type res = inflight.erase(p);
     mtx.unlock();
 
-    DBGASSERT(res > 0);
+    assert(res > 0);
 
     ::free(p);
   }
 
   void new_(void *p) {
-    DBGASSERT(p != nullptr);
+    assert(p != nullptr);
 
     mtx.lock();
-    DBGASSERT(inflight.find(p) != inflight.end());
+    assert(inflight.find(p) != inflight.end());
     mtx.unlock();
 
     mtx.lock();
-    DBGASSERT(inflight[p] == MALLOC_);
+    assert(inflight[p] == MALLOC_);
     mtx.unlock();
 
     mtx.lock();
@@ -103,14 +102,14 @@ class TrackingAllocator {
   }
 
   void delete_(void *p) {
-    DBGASSERT(p != nullptr);
+    assert(p != nullptr);
 
     mtx.lock();
-    DBGASSERT(inflight.find(p) != inflight.end());
+    assert(inflight.find(p) != inflight.end());
     mtx.unlock();
 
     mtx.lock();
-    DBGASSERT(inflight[p] == NEW_);
+    assert(inflight[p] == NEW_);
     mtx.unlock();
 
     mtx.lock();

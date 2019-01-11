@@ -32,7 +32,6 @@
 
 #include "gam/backend_ptr.hpp"
 #include "gam/Logger.hpp"
-#include "gam/utils.hpp"
 #include "gam/wrapped_allocator.hpp"
 
 namespace gam {
@@ -51,7 +50,7 @@ class Cache {
     using bp_t = backend_typed_ptr<T, void (*)(T *)>;
 
     if (!available()) make_room();
-    DBGASSERT(cache_map.find(a) == cache_map.end());
+    assert(cache_map.find(a) == cache_map.end());
     auto lp = new T();
     cache_map[a] = wa.new_<bp_t>(lp, [](T *p) { delete p; });
     *lp = *p;
