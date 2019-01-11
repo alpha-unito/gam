@@ -44,7 +44,7 @@ class MemoryController {
     LOGLN("SMC init %llu", a);
 
     // mtx.lock();
-    DBGASSERT(ref_cnt.find(a) == ref_cnt.end());
+    assert(ref_cnt.find(a) == ref_cnt.end());
     // mtx.unlock();
 
     // mtx.lock();

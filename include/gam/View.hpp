@@ -57,7 +57,7 @@ class View {
   ~View() {
     for (auto it = view_map.begin(); it != view_map.end(); ++it) {
       /* check no spurious committed copies */
-      DBGASSERT(it->second.committed == nullptr);
+      assert(it->second.committed == nullptr);
     }
   }
 
@@ -149,7 +149,7 @@ class View {
    */
 
   inline void unmap(const uint64_t a) {
-    DBGASSERT(view_map.find(a) != view_map.end());
+    assert(view_map.find(a) != view_map.end());
 
     view_map.erase(a);
 
@@ -157,7 +157,7 @@ class View {
   }
 
   inline void unbind_parent(void *const c) {
-    DBGASSERT(has_parent(c));
+    assert(has_parent(c));
 
     parent_map.erase(c);
 
