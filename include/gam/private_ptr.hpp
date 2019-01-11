@@ -87,16 +87,16 @@ class private_ptr {
         // not a private child
         if (!make(lp, lup.get_deleter())) {
           std::cerr
-              << "> could not create a private pointer for gam-unique pointer: "
-              << lup << std::endl;
+              << "> could not create a private pointer for gam-unique address: "
+              << lp << std::endl;
           return;
         }
       } else {
         // private child: writeback
         if (!writeback(std::move(lup))) {
           std::cerr << "> could not retrieve the private pointer for "
-                       "gam-unique pointer: "
-                    << lup << std::endl;
+                       "gam-unique address: "
+                    << lp << std::endl;
           return;
         }
       }
@@ -200,7 +200,7 @@ class private_ptr {
       std::cerr << "> called local() for non-owned pointer:\n"
                 << internal_gp << std::endl;
     }
-    return gam_unique_ptr<T>(nullptr, [](T *){});
+    return gam_unique_ptr<T>(nullptr, [](T *) {});
   }
 
   /**
