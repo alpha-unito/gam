@@ -31,11 +31,10 @@
 #include <unordered_map>
 
 #include "gam/Context.hpp"  //ctx
-#include "gam/gam_unique_ptr.hpp"
 #include "gam/GlobalPointer.hpp"
 #include "gam/Logger.hpp"
+#include "gam/gam_unique_ptr.hpp"
 #include "gam/private_ptr.hpp"
-#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -57,11 +56,15 @@ class public_ptr {
    * @param d the deleter
    */
   template <typename Deleter>
-  public_ptr(T *const lp, Deleter d)  // todo noexcept
-      : public_ptr() {
+  public_ptr(T *const lp, Deleter d) : public_ptr() {
     if (lp) {
       LOGLN_OS("PUB constructor local=" << lp);
-      make(lp, d);
+      internal_gp = ctx().mmap_public(*lp, d);
+      if (internal_gp.is_address())
+        ctx().rc_init(internal_gp);
+      else
+        std::cerr << "> could not create a public pointer for local pointer: "
+                  << lp << std::endl;
     }
   }
 
@@ -93,7 +96,6 @@ class public_ptr {
    */
   public_ptr(const public_ptr &copy) noexcept : internal_gp(copy.internal_gp) {
     LOGLN_OS("PUB copy-constructor global=" << internal_gp);
-
     if (internal_gp.is_address()) ctx().rc_inc(internal_gp);
   }
 
@@ -204,9 +206,11 @@ class public_ptr {
    * local makes a local copy of the memory pointed by the public pointer and
    * returns it as a shared pointer.
    */
-  std::shared_ptr<T> local() {
-    USRASSERT(internal_gp.is_address());
-    return ctx().local_public<T>(internal_gp);
+  std::shared_ptr<T> local() const {
+    if (internal_gp.is_address()) return ctx().local_public<T>(internal_gp);
+    std::cerr << "> called local() for non-address pointer:\n"
+              << internal_gp << std::endl;
+    return nullptr;
   }
 
   /**
@@ -215,14 +219,16 @@ class public_ptr {
    * @param to is the executor to push to
    */
   void push(executor_id to) const {
-    USRASSERT(ctx().cardinality());
-    if (internal_gp.is_address()) {
-      // pointer brings a global address
-      ctx().push_public(internal_gp, to);
-      ctx().rc_inc(internal_gp);
+    if (to < ctx().cardinality()) {
+      if (internal_gp.is_address()) {
+        // pointer brings a global address
+        ctx().push_public(internal_gp, to);
+        ctx().rc_inc(internal_gp);
+      } else
+        // pointer brings a reserved value
+        ctx().push_reserved(internal_gp, to);
     } else
-      // pointer brings a reserved value
-      ctx().push_reserved(internal_gp, to);
+      std::cerr << "> called push() towards invalid rank: " << to << std::endl;
   }
 
   /*
@@ -233,7 +239,7 @@ class public_ptr {
    ***************************************************************************
    */
 
-  unsigned long long use_count() const { return ctx().get_rc(internal_gp); }
+  unsigned long long use_count() const { return ctx().rc_get(internal_gp); }
 
   void reset() noexcept {
     ctx().rc_dec(internal_gp);
@@ -267,13 +273,17 @@ class public_ptr {
     return *this;
   }
 
-  bool operator==(std::nullptr_t) noexcept { return internal_gp.address() == 0; }
+  bool operator==(std::nullptr_t) const noexcept {
+    return internal_gp.address() == 0;
+  }
 
   friend bool operator==(std::nullptr_t, const public_ptr &__x) noexcept {
     return __x == nullptr;
   }
 
-  bool operator!=(std::nullptr_t) noexcept { return internal_gp.address() != 0; }
+  bool operator!=(std::nullptr_t) noexcept {
+    return internal_gp.address() != 0;
+  }
 
   friend bool operator!=(std::nullptr_t, const public_ptr &__x) noexcept {
     return __x != nullptr;
@@ -281,15 +291,6 @@ class public_ptr {
 
  private:
   GlobalPointer internal_gp;
-
-  template <typename Deleter>
-  void make(T *lp, Deleter d) {
-    internal_gp = ctx().mmap_public(*lp, d);
-    DBGASSERT(internal_gp.is_address());
-
-    /* init reference counter */
-    ctx().rc_init(internal_gp);
-  }
 };
 
 template <typename _Tp, typename... _Args>
@@ -307,8 +308,10 @@ public_ptr<_Tp> make_public(_Args &&... __args) {
  */
 template <typename T>
 public_ptr<T> pull_public(executor_id from) {
-  USRASSERT(from != ctx().rank() && from < ctx().cardinality());
-  return public_ptr<T>(ctx().pull_public(from));
+  if (from < ctx().cardinality() && from != ctx().rank())
+    return public_ptr<T>(ctx().pull_public(from));
+  std::cerr << "> pull_public() towards invalid rank: " << from << std::endl;
+  return nullptr;
 }
 
 /**

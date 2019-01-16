@@ -35,7 +35,6 @@
 #include <rdma/fabric.h>
 #include <rdma/fi_domain.h>
 
-#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -110,7 +109,7 @@ static void fl_init(fi_info *fi) {
   // init domain
   ret += fi_domain(fl_fabric_, fi, &fl_domain_, NULL);
 
-  DBGASSERT(!ret);
+  assert(!ret);
 }
 
 static void fl_fini() {
@@ -118,7 +117,7 @@ static void fl_fini() {
 
   ret += fi_close(&fl_domain_->fid);
   ret += fi_close(&fl_fabric_->fid);
-  DBGASSERT(!ret);
+  assert(!ret);
 }
 
 /*

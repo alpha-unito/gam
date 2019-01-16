@@ -32,7 +32,6 @@
 #include <limits>
 
 #include "gam/Logger.hpp"
-#include "gam/utils.hpp"
 
 namespace gam {
 
@@ -68,9 +67,9 @@ class GlobalPointer {
     descriptor_ = lsb | ((uint64_t)home << 32);
 
     /* check consistency */
-    DBGASSERT(is_address());
-    DBGASSERT((lsb | ((uint64_t)home << 32)) == this->address());
-    DBGASSERT(home == this->home());
+    assert(is_address());
+    assert((lsb | ((uint64_t)home << 32)) == this->address());
+    assert(home == this->home());
   }
 
   GlobalPointer(uint64_t d) { descriptor_ = d; }

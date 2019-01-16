@@ -44,7 +44,7 @@ class MemoryController {
     LOGLN("SMC init %llu", a);
 
     // mtx.lock();
-    DBGASSERT(ref_cnt.find(a) == ref_cnt.end());
+    assert(ref_cnt.find(a) == ref_cnt.end());
     // mtx.unlock();
 
     // mtx.lock();
@@ -70,7 +70,7 @@ class MemoryController {
     return res;
   }
 
-  inline unsigned long long get_rc(uint64_t a) {
+  inline unsigned long long rc_get(uint64_t a) {
     unsigned long long res = ref_cnt[a];
     LOGLN("SMC %llu = %llu", a, res);
     return res;

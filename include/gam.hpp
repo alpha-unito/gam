@@ -43,7 +43,6 @@
 #include "gam/defs.hpp"
 #include "gam/private_ptr.hpp"
 #include "gam/public_ptr.hpp"
-#include "gam/utils.hpp"
 
 namespace gam {
 

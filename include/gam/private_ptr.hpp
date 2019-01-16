@@ -28,10 +28,9 @@
 #define INCLUDE_GAM_PRIVATE_PTR_HPP_
 
 #include "gam/Context.hpp"  //ctx
-#include "gam/gam_unique_ptr.hpp"
 #include "gam/GlobalPointer.hpp"
 #include "gam/Logger.hpp"
-#include "gam/utils.hpp"
+#include "gam/gam_unique_ptr.hpp"
 
 namespace gam {
 
@@ -55,11 +54,12 @@ class private_ptr {
    * @param d the deleter
    */
   template <typename Deleter>
-  private_ptr(T *const lp, Deleter d)  // noexcept todo
-  {
+  private_ptr(T *const lp, Deleter d) {
     if (lp) {
       LOGLN_OS("PVT constructor local=" << lp);
-      make(lp, d);
+      if (!make(lp, d))
+        std::cerr << "> could not create a private pointer for local pointer: "
+                  << lp << std::endl;
     }
   }
 
@@ -76,20 +76,29 @@ class private_ptr {
    *
    * @param lup the unique local pointer
    */
-  private_ptr(gam_unique_ptr<T> &&lup)  // todo noexcept
-  {
+  private_ptr(gam_unique_ptr<T> &&lup) {
     T *lp = lup.get();
 
     if (lup != nullptr) {
       LOGLN_OS("PVT constructor unique=" << lp);
 
       /* lookup parent global pointer */
-      if (!ctx().has_parent(lp))
+      if (!ctx().has_parent(lp)) {
         // not a private child
-        make(lp, lup.get_deleter());
-      else {
+        if (!make(lp, lup.get_deleter())) {
+          std::cerr
+              << "> could not create a private pointer for gam-unique address: "
+              << lp << std::endl;
+          return;
+        }
+      } else {
         // private child: writeback
-        writeback(std::move(lup));
+        if (!writeback(std::move(lup))) {
+          std::cerr << "> could not retrieve the private pointer for "
+                       "gam-unique address: "
+                    << lp << std::endl;
+          return;
+        }
       }
 
       /* neutralize destruction */
@@ -168,21 +177,30 @@ class private_ptr {
    * pointer is destroyed (otherwise could be dangling).
    */
   gam_unique_ptr<T> local() {
-    USRASSERT(internal_gp.is_address());
-    USRASSERT(ctx().am_owner(internal_gp));
+    if (internal_gp.is_address() && ctx().am_owner(internal_gp)) {
+      T *lp = ctx().local_private<T>(internal_gp);
 
-    T *lp = ctx().local_private<T>(internal_gp);
+      /* neutralize parent destruction */
+      release();
 
-    /* neutralize parent destruction */
-    release();
+      /* prepare child deleter */
+      auto deleter = [](T *lp) {
+        assert(ctx().has_parent(lp));
+        ctx().unmap(ctx().parent(lp));
+      };
 
-    /* prepare child deleter */
-    auto deleter = [](T *lp) {
-      DBGASSERT(ctx().has_parent(lp));
-      ctx().unmap(ctx().parent(lp));
-    };
+      return gam_unique_ptr<T>(lp, deleter);
+    }
 
-    return gam_unique_ptr<T>(lp, deleter);
+    if (!internal_gp.is_address()) {
+      std::cerr << "> called local() for non-address pointer:\n"
+                << internal_gp << std::endl;
+    }
+    if (!ctx().am_owner(internal_gp)) {
+      std::cerr << "> called local() for non-owned pointer:\n"
+                << internal_gp << std::endl;
+    }
+    return gam_unique_ptr<T>(nullptr, [](T *) {});
   }
 
   /**
@@ -191,19 +209,23 @@ class private_ptr {
    * @param to is the executor to transfer to
    */
   void push(executor_id to) {
-    USRASSERT(to != ctx().rank() && to < ctx().cardinality());
+    if (to != ctx().rank() && to < ctx().cardinality()) {
+      if (internal_gp.is_address()) {
+        // pointer brings a global address
+        if (ctx().am_owner(internal_gp)) {
+          ctx().push_private(internal_gp, to);
+          release();
+        } else
+          std::cerr << "> called push() for non-owned pointer:\n"
+                    << internal_gp << std::endl;
+      }
 
-    if (internal_gp.is_address()) {
-      // pointer brings a global address
-      USRASSERT(ctx().am_owner(internal_gp));
-      ctx().push_private(internal_gp, to);
-      release();
-    }
-
-    else {
-      // pointer brings a reserved value
-      ctx().push_reserved(internal_gp, to);
-    }
+      else {
+        // pointer brings a reserved value
+        ctx().push_reserved(internal_gp, to);
+      }
+    } else
+      std::cerr << "> called push() towards invalid rank: " << to << std::endl;
   }
 
   /*
@@ -273,23 +295,23 @@ class private_ptr {
   GlobalPointer internal_gp;
 
   template <typename Deleter>
-  void make(T *lp, Deleter d)  // todo noexcept
-  {
+  bool make(T *lp, Deleter d) {
     internal_gp = ctx().mmap_private(*lp, d);
-    DBGASSERT(internal_gp.is_address());
+    return internal_gp.is_address();
   }
 
   template <typename _Tp>
-  void writeback(gam_unique_ptr<_Tp> &&child)  // todo noexcept
-  {
+  bool writeback(gam_unique_ptr<_Tp> &&child) {
     LOGLN_OS("PVT writeback unique=" << child.get());
 
     _Tp *lp = child.get();
 
-    USRASSERT(ctx().has_parent(lp));
-    USRASSERT(ctx().am_owner(ctx().parent(lp)));
+    if (ctx().has_parent(lp) && ctx().am_owner(ctx().parent(lp))) {
+      internal_gp = ctx().parent(lp);
+      return true;
+    }
 
-    internal_gp = ctx().parent(lp);
+    return false;
   }
 };
 
@@ -308,8 +330,10 @@ private_ptr<_Tp> make_private(_Args &&... __args) {
  */
 template <typename T>
 private_ptr<T> pull_private(executor_id from) {
-  USRASSERT(from != ctx().rank() && from < ctx().cardinality());
-  return private_ptr<T>(ctx().pull_private(from));
+  if (from != ctx().rank() && from < ctx().cardinality())
+    return private_ptr<T>(ctx().pull_private(from));
+  std::cerr << "> pull_private() towards invalid rank: " << from << std::endl;
+  return nullptr;
 }
 
 /**
