@@ -95,6 +95,11 @@ static void fl_getinfo(fi_info **fi,                           //
 #endif
 }
 
+static int fl_dst_addr(char *node, char *service, struct fi_info **fi_dst,
+                       uint64_t flags) {
+  return fi_getinfo(FL_FI_VERSION, node, service, flags, fl_info_, fi_dst);
+}
+
 static void fl_init(fi_info *fi) {
   int ret = 0;
 
