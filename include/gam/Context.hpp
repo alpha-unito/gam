@@ -579,7 +579,7 @@ class Context {
         /*
          * destroy and un-bind committed memory
          */
-        unmap(a);
+        unmap(p);
     } else
       forward_dec(p);
   }
@@ -734,7 +734,7 @@ class Context {
           case daemon_pointer::RC_DEC:
             LOGLN("DMN recv -1 %llu from %lu", a, p.from);
             assert(ctx.view.author(a) == ctx.rank());
-            if (ctx.mc.rc_dec(a) == 0) ctx.unmap(a);
+            if (ctx.mc.rc_dec(a) == 0) ctx.unmap(p.p);
             break;
           case daemon_pointer::RC_GET: {
             LOGLN("DMN recv RC_GET %llu from %lu", a, p.from);
@@ -747,7 +747,7 @@ class Context {
             LOGLN("DMN recv PVT -1 %llu from %lu", a, p.from);
             assert(ctx.view.author(a) == ctx.rank_);
             assert(ctx.view.committed(a) != nullptr);
-            ctx.unmap(a);
+            ctx.unmap(p.p);
             break;
           case daemon_pointer::RLOAD:
             LOGLN("DMN recv RLOAD %llu from %lu", a, p.from);
