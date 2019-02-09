@@ -62,7 +62,7 @@ class GlobalPointer {
 
   GlobalPointer() {}
 
-  GlobalPointer(uint64_t descriptor) : descriptor_(descriptor) {}
+  explicit GlobalPointer(uint64_t descriptor) : descriptor_(descriptor) {}
 
   GlobalPointer(executor_id home, uint64_t lsb)
       : GlobalPointer(lsb | ((uint64_t)home << 32)) {
