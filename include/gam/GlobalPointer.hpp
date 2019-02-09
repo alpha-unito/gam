@@ -62,12 +62,11 @@ class GlobalPointer {
 
   GlobalPointer() {}
 
-  GlobalPointer(uint64_t descriptor) : descriptor_(descriptor) {
-    assert(is_address());
-  }
+  GlobalPointer(uint64_t descriptor) : descriptor_(descriptor) {}
 
   GlobalPointer(executor_id home, uint64_t lsb)
       : GlobalPointer(lsb | ((uint64_t)home << 32)) {
+    assert(is_address());
     assert((this->lsb() | ((uint64_t)home << 32)) == this->address());
     assert(home == this->home());
   }
